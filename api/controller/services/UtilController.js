@@ -1,4 +1,4 @@
-const responseCode = require("../../../config/responseCode");
+const responseCode = require("../../../config/responseCode").returnCode;
 const mongoose = require("mongoose");
 var CryptoJS = require("crypto-js");
 var Tag = require("../../model/Tag");
@@ -60,9 +60,6 @@ module.exports = {
     let userCode = responseCode.accountSuspended; // user account is suspended/ deactivated, needs to check with admin team
     try {
       if (!module.exports.isEmpty(userObj)) {
-        if (!userObj.emailVerified) {
-          userCode = responseCode.notVerifiedEmail; // success, email id is valid
-        }
         if (userObj.active && userCode === responseCode.accountSuspended) {
           userCode = responseCode.validEmail; // success, email id is valid
         }

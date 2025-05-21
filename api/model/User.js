@@ -17,6 +17,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  password: {
+    type: String,
+    default: "",
+  },
   tempOtp: {
     type: String,
     default: "",
@@ -41,6 +45,22 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  passwordAttempt: {
+    type: Number,
+    default: 0,
+  },
+  lastLogin: {
+    type: Number,
+    default: () => Math.floor(Date.now() / 1000),
+  },
+  permission: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Role",
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  },
   updatedAt: {
     type: Number,
     default: () => Math.floor(Date.now() / 1000),
@@ -48,10 +68,6 @@ const userSchema = new mongoose.Schema({
   createdAt: {
     type: Number,
     default: () => Math.floor(Date.now() / 1000),
-  },
-  permission: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Role",
   },
 });
 

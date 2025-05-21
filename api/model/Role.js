@@ -30,6 +30,10 @@ const roleSchema = new mongoose.Schema({
       ],
     },
   ],
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  },
   updatedAt: {
     type: Number,
     default: () => Math.floor(Date.now() / 1000),
