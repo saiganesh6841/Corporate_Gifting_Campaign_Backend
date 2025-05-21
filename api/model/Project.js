@@ -26,11 +26,11 @@ const projectSchema = new mongoose.Schema({
     default: "",
   },
   startDate: {
-    type: Number,
+    type: String,
     default: "",
   },
   endDate: {
-    type: Number,
+    type: String,
     default: "",
   },
   clientPhoneNo: {
@@ -57,10 +57,12 @@ const projectSchema = new mongoose.Schema({
   isSuperAssigned: {
     type: Boolean,
   },
-  rooms: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Room",
-  },
+  rooms: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Room",
+    },
+  ],
   createdAt: {
     type: Number,
     default: Math.floor(Date.now() / 1000),

@@ -23,7 +23,7 @@ module.exports = {
         { email: createObj.email },
         { mobileNumber: createObj.mobileNumber },
       ],
-      status: true,
+      active: true,
     });
 
     if (existingUser) {

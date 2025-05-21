@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const UserController = require("../api/controller/admin/UserController");
+const ProjectController = require("../api/controller/admin/ProjectController")
 
-router.route("/createUser").post(UserController.createUser);
+router.route("/create/user").post(UserController.createUser);
+router.route("/create/project").post(ProjectController.createProject)
 module.exports = router;

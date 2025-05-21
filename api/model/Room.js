@@ -1,10 +1,15 @@
 const mongoose = require("mongoose");
 
-const roomSchema = new mongoose.Schema({
-  roomId: {
-    type: String,
-    default: "",
+const imageSchema = new mongoose.Schema(
+  {
+    type: { type: String, default: "" },
+    name: { type: String, default: "" },
+    url: { type: String, required: true },
   },
+  { _id: false }
+);
+
+const roomSchema = new mongoose.Schema({
   roomName: {
     type: String,
     default: "",
@@ -16,6 +21,18 @@ const roomSchema = new mongoose.Schema({
   description: {
     type: String,
     default: "",
+  },
+  roomIcon: {
+    type: String,
+    default: "",
+  },
+  color: {
+    type: String,
+    default: "",
+  },
+  imageUrls: {
+    type: [imageSchema],
+    default: [],
   },
   createdAt: {
     type: Number,

@@ -1,6 +1,6 @@
 module.exports = {
   admin: {
-    authNotRequire: ["/admin", "/accountLogin", "/verify/otp", "/createUser"],
+    authNotRequire: ["/admin", "/accountLogin", "/verify/otp", "/create/user","/create/project" ],
     language: [],
   },
   user: {

@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "worker", //worker, admin, superviser
   },
-  status: {
+  active: {
     type: Boolean,
     default: true,
   },
