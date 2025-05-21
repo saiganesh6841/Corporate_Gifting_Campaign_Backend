@@ -57,6 +57,7 @@ const projectSchema = new mongoose.Schema({
   isSupervisorAssigned: {
     type: Boolean,
   },
+
   rooms: [
     {
       type: mongoose.Schema.Types.ObjectId,

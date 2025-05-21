@@ -33,6 +33,7 @@ module.exports = {
     mobileNoAlreadyRegistered: 132,
     quotaExceded: 133,
     incompleteBody: 134,
+    invalidInput: 135,
     success: 100, //	Success
     errror: 600, //	Exception / server errror
   },
