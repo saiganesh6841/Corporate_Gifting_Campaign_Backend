@@ -14,9 +14,9 @@ const roomSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
-  floor: {
-    type: String,
-    default: "",
+  floorId: {
+    type: mongoose.Schema.ObjectId,
+    ref: "Floor",
   },
   description: {
     type: String,

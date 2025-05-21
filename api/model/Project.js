@@ -57,6 +57,7 @@ const projectSchema = new mongoose.Schema({
   isSuperAssigned: {
     type: Boolean,
   },
+
   rooms: [
     {
       type: mongoose.Schema.Types.ObjectId,
