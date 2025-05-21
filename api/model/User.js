@@ -17,10 +17,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
-  tempOtp: {
-    type: String,
-    default: "",
-  },
   userType: {
     type: String,
     default: "worker", //worker, admin, superviser
@@ -52,6 +48,10 @@ const userSchema = new mongoose.Schema({
   permission: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Role",
+  },
+  projectId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Project",
   },
 });
 

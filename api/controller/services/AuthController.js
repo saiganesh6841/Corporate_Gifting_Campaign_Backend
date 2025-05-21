@@ -3,6 +3,7 @@ const authorization = require("../../../config/authorization");
 const responseCode = require("../../../config/responseCode");
 const { httpReturnCode } = require("../../../config/httpResponseCode");
 const UtilController = require("../services/UtilController");
+const { addUserToReq, verifyToken } = require("./TokenController");
 
 const adminAuthList = [];
 const usersAuthList = [];
@@ -44,6 +45,7 @@ const extractTokenDetails = (req, res, next) => {
 
 module.exports = {
   checkRequestAuth: async function (req, res, next) {
+    
     try {
       // Uses inefficient cache policy on static assets. this is added to increase page rendering speed
       // res.set('Cache-Control', 'public, max-age=31557600');
@@ -66,6 +68,7 @@ module.exports = {
         req.path.startsWith("/user") &&
         usersAuthList.indexOf(req.path) < 0
       ) {
+        
         // module.exports.checkAdminRequestAuth(req, res, next);
         module.exports.verifyAuthTokenForApiRequest(req, res, next);
       } else if (

@@ -54,7 +54,7 @@ const projectSchema = new mongoose.Schema({
   isWorkerAssigned: {
     type: Boolean,
   },
-  isSuperAssigned: {
+  isSupervisorAssigned: {
     type: Boolean,
   },
   rooms: [
@@ -71,6 +71,9 @@ const projectSchema = new mongoose.Schema({
     type: Number,
     default: Math.floor(Date.now() / 1000),
   },
+  status:{
+    enum:["pending", "completed", "inprogress"]
+  }
 });
 
 module.exports = mongoose.model("Project", projectSchema);
