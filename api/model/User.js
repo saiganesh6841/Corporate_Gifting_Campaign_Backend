@@ -17,6 +17,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  password: {
+    type: String,
+    default: "",
+  },
+  tempOtp: {
+    type: String,
+    default: "",
+  },
   userType: {
     type: String,
     default: "worker", //worker, admin, superviser
@@ -37,11 +45,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
-  updatedAt: {
+  passwordAttempt: {
     type: Number,
-    default: () => Math.floor(Date.now() / 1000),
+    default: 0,
   },
-  createdAt: {
+  lastLogin: {
     type: Number,
     default: () => Math.floor(Date.now() / 1000),
   },
@@ -49,9 +57,17 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Role",
   },
-  projectId: {
+  createdBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Project",
+    ref: "User",
+  },
+  updatedAt: {
+    type: Number,
+    default: () => Math.floor(Date.now() / 1000),
+  },
+  createdAt: {
+    type: Number,
+    default: () => Math.floor(Date.now() / 1000),
   },
 });
 

@@ -1,6 +1,8 @@
 const express = require("express");
 const path = require("path");
 var multer = require("multer");
+var session = require("express-session");
+var cookieParser = require("cookie-parser");
 const MongoStore = require("connect-mongo");
 var cors = require("cors");
 const user = require("./routes/user");
@@ -12,7 +14,7 @@ var app = express();
 
 // mongodb configuration
 const mongoose = require("mongoose");
-const connectionUrl = process.env.MONGODB_CONNECTION_STRING_DEVELOPMENT;
+const connectionUrl = process.env.MONGODB_URI_DEV;
 if (!(connectionUrl === undefined || connectionUrl?.length <= 0)) {
   mongoose.set("debug", false);
   mongoose.Promise = global.Promise;
@@ -41,13 +43,38 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(
+  express.json({
+    limit: "50mb",
+  })
+);
 app.use(
   express.urlencoded({
     extended: true,
   })
 );
 // app.use(multer());
+app.use(
+  session({
+    secret: "flora",
+    resave: false, //don't save session if unmodified
+    saveUninitialized: true,
+    store: new MongoStore({
+      mongoUrl: connectionUrl,
+      //touchAfter: 24 * 3600, // time period in seconds
+      ttl: 30 * 24 * 60 * 60, // = 14 days. Default
+      autoRemove: "native", // Default
+    }),
+    rolling: true,
+    cookie: {
+      originalMaxAge: 30 * 24 * 60 * 60 * 1000,
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      secure: false,
+      // expires: new Date(Date.now() + 300000),
+    },
+  })
+);
+app.use(cookieParser());
 
 app.use("/", function (req, res, next) {
   AuthController.checkRequestAuth(req, res, next);
