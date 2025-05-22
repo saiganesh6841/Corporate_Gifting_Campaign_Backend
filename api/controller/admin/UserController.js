@@ -55,6 +55,6 @@ module.exports = {
   },
 
   queryAllWorkers : async (req, res, next) => {
-
+    
   }
 };
