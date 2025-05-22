@@ -53,7 +53,7 @@ app.use(
     extended: true,
   })
 );
-// app.use(multer());
+app.use(multer());
 app.use(
   session({
     secret: "flora",

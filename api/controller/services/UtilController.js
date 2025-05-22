@@ -2,6 +2,16 @@ const responseCode = require("../../../config/responseCode").returnCode;
 const mongoose = require("mongoose");
 var CryptoJS = require("crypto-js");
 var Tag = require("../../model/Tag");
+const AWS = require("aws-sdk");
+const awsConfig = require("./../../../config/connection");
+const AwsController = require("./AwsController");
+
+AWS.config.update({
+  secretAccessKey: awsConfig.aws.secretAccessKey,
+  accessKeyId: awsConfig.aws.accessKeyId,
+  region: awsConfig.aws.region,
+});
+var link = awsConfig.aws.link;
 module.exports = {
   sendSuccess: async (req, res, next, data) => {
     if (module.exports.isEmpty(data.responseCode)) {
@@ -103,85 +113,92 @@ module.exports = {
       return null;
     }
   },
-  //   uploadFiles: async function (req, res, next) {
-  //     try {
-  //       const attachmentUrlArray = [];
-  //       const bucket = awsConfig.aws.bucket + "/" + req.body.bucketName;
-  //       const isPrivate = req.body.isPrivate === true;
+  uploadFiles: async function (req, res, next) {
+    try {
+      console.log(req.body);
 
-  //       if (req.files && req.files.attachment) {
-  //         const attachmentObj = req.files.attachment;
-  //         console.log(attachmentObj);
+      const attachmentUrlArray = [];
+      const bucket = awsConfig.aws.bucket + "/" + req.body.bucketName;
+      const isPrivate = req.body.isPrivate === true;
 
-  //         if (Array.isArray(attachmentObj)) {
-  //           // Handle multiple files
-  //           const uploadPromises = attachmentObj.map(async (file) => {
-  //             const attachmentName = Date.now() + "_" + file.originalname;
-  //             const attachmentUrl = link.concat(
-  //               bucket + "/" + encodeURIComponent(attachmentName)
-  //             );
-  //             attachmentUrlArray.push(attachmentUrl);
-  //             console.log(attachmentUrl);
+      if (req.files && req.files.attachment) {
+        const attachmentObj = req.files.attachment;
+        console.log(attachmentObj);
 
-  //             await AwsController.upload2AWS(
-  //               file.path,
-  //               bucket,
-  //               attachmentName,
-  //               file.mimetype
-  //             );
-  //           });
+        if (Array.isArray(attachmentObj)) {
+          // Handle multiple files
+          const uploadPromises = attachmentObj.map(async (file) => {
+            const attachmentName = Date.now() + "_" + file.originalname;
+            const attachmentUrl = link.concat(
+              bucket + "/" + encodeURIComponent(attachmentName)
+            );
+            attachmentUrlArray.push(attachmentUrl);
+            console.log(attachmentUrl);
 
-  //           await Promise.all(uploadPromises);
+            await AwsController.upload2AWS(
+              file.path,
+              bucket,
+              attachmentName,
+              file.mimetype
+            );
+          });
 
-  //           if (isPrivate) {
-  //             const data = {
-  //               attachmentName: attachmentObj[0].originalname, // or adjust based on needs
-  //               attachmentUrl: attachmentUrlArray[0],
-  //             };
-  //             module.exports.saveFile(req, res, next, data);
-  //           } else {
-  //             module.exports.sendSuccess(req, res, next, {
-  //               attachmentUrl: attachmentUrlArray,
-  //             });
-  //           }
-  //         } else {
-  //           // Handle single file
-  //           const file = attachmentObj;
-  //           const attachmentName = Date.now() + "_" + file.originalname;
-  //           const attachmentUrl = link.concat(
-  //             bucket + "/" + encodeURIComponent(attachmentName)
-  //           );
-  //           console.log(attachmentUrl);
-  //           attachmentUrlArray.push(attachmentUrl);
+          await Promise.all(uploadPromises);
 
-  //           await upload2aws(file.path, bucket, attachmentName, file.mimetype);
+          if (isPrivate) {
+            const data = {
+              attachmentName: attachmentObj[0].originalname, // or adjust based on needs
+              attachmentUrl: attachmentUrlArray[0],
+            };
+            module.exports.saveFile(req, res, next, data);
+          } else {
+            module.exports.sendSuccess(req, res, next, {
+              attachmentUrl: attachmentUrlArray,
+            });
+          }
+        } else {
+          // Handle single file
+          const file = attachmentObj;
+          const attachmentName = Date.now() + "_" + file.originalname;
+          const attachmentUrl = link.concat(
+            bucket + "/" + encodeURIComponent(attachmentName)
+          );
+          console.log(attachmentUrl);
+          attachmentUrlArray.push(attachmentUrl);
 
-  //           if (isPrivate) {
-  //             const data = {
-  //               attachmentName,
-  //               attachmentUrl: attachmentUrlArray[0],
-  //             };
-  //             module.exports.saveFile(req, res, next, data);
-  //           } else {
-  //             module.exports.sendSuccess(req, res, next, {
-  //               attachmentUrl: attachmentUrlArray,
-  //             });
-  //           }
-  //         }
-  //       } else {
-  //         // Handle the case where no files are provided
-  //         module.exports.sendError(
-  //           req,
-  //           res,
-  //           next,
-  //           new Error("No files uploaded")
-  //         );
-  //       }
-  //     } catch (err) {
-  //       console.error(err);
-  //       module.exports.sendError(req, res, next, err);
-  //     }
-  //   },
+          await AwsController.uploadSingleFile(
+            file.path,
+            bucket,
+            attachmentName,
+            file.mimetype
+          );
+
+          if (isPrivate) {
+            const data = {
+              attachmentName,
+              attachmentUrl: attachmentUrlArray[0],
+            };
+            module.exports.saveFile(req, res, next, data);
+          } else {
+            module.exports.sendSuccess(req, res, next, {
+              attachmentUrl: attachmentUrlArray,
+            });
+          }
+        }
+      } else {
+        // Handle the case where no files are provided
+        module.exports.sendError(
+          req,
+          res,
+          next,
+          new Error("No files uploaded")
+        );
+      }
+    } catch (err) {
+      console.error(err);
+      module.exports.sendError(req, res, next, err);
+    }
+  },
   pad: (num, size) => {
     var s = num + "";
     while (s.length < size) s = "0" + s;

@@ -10,7 +10,7 @@ module.exports = {
     language: [],
   },
   user: {
-    authNotRequire: ["/home", "/accountLogin", "/verify/otp", "/upload/file"],
+    authNotRequire: ["/home", "/accountLogin", "/verify/otp", "/upload/files"],
     language: [],
   },
   index: {
