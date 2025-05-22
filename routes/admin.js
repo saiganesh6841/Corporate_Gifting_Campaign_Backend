@@ -10,16 +10,18 @@ const { adminAuth } = require("../middleware/adminAuth");
 // authentication
 router.route("/accountLogin").post(AuthController.accountLogin);
 router.route("/verifyOtp").post(AuthController.verifyOtp);
-router.route("/islogin").get(adminAuth, UserController.accountLoginStatus);
+router.route("/resendOtp").post(AuthController.resendOtp);
+router.route("/islogin").get(adminAuth, AuthController.accountLoginStatus);
+router.route("/logout").get(adminAuth, AuthController.logout);
 
 // user routes
-router.route("/create/user").post(adminAuth, UserController.createUser);
+router.route("/user/create").post(adminAuth, UserController.createUser);
 
 // roles routes
-router.route("/create/role").post(adminAuth, RoleController.createRole);
+router.route("/role/create/").post(adminAuth, RoleController.createRole);
 
 router
-  .route("/create/project")
+  .route("/project/create")
   .post(adminAuth, ProjectController.createProject);
 
 //   room routes

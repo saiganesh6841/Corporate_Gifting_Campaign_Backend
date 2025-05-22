@@ -84,30 +84,7 @@ module.exports = {
     }
   },
 
-  accountLoginStatus: async function (req, res, next) {
-    try {
-      let responseCode = returnCode.invalidSession;
-      let user, receiverId;
-      if (!UtilController.isEmpty(req.session.userId)) {
-        responseCode = returnCode.validSession;
-        receiverId = req.session.userId;
-
-        user = await User.findById(req.session.userId)
-          .select(
-            "fullName email mobileNumber  profileImage userType permission dob isPasswordChange"
-          )
-          .populate("permission")
-          .lean();
-      }
-
-      UtilController.sendSuccess(req, res, next, {
-        responseCode,
-        user,
-      });
-    } catch (err) {
-      UtilController.sendError(req, res, next, err);
-    }
-  },
+ 
 
   queryAllWorkers: async (req, res, next) => {},
 };

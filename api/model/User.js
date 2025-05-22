@@ -57,6 +57,10 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Role",
   },
+  otpExpiresAt: {
+    type: Number,
+    default: () => Math.floor(Date.now() / 1000),
+  },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
