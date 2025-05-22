@@ -133,8 +133,6 @@ module.exports = {
   },
   uploadFiles: async function (req, res, next) {
     try {
-      console.log(req.body);
-
       const attachmentUrlArray = [];
       const bucket = awsConfig.aws.bucket + "/" + req.body.bucketName;
       const isPrivate = req.body.isPrivate === true;

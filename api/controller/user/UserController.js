@@ -88,11 +88,23 @@ module.exports = {
   },
 
   uploadFiles: async (req, res, next) => {
-    try {        
+    try {
       UtilController.uploadFiles(req, res, next);
     } catch (err) {
       console.log("uploadFiles -catch");
       console.log(err);
+      UtilController.sendError(req, res, next, err);
+    }
+  },
+
+  logout: async (req, res, next) => {
+    try {
+      req.user = {};
+      UtilController.sendSuccess(req, res, next, {
+        message: "user account is logout successfully",
+      });
+    } catch (err) {
+      console.error(err);
       UtilController.sendError(req, res, next, err);
     }
   },

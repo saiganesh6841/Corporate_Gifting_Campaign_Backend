@@ -41,6 +41,13 @@ const projectSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  details: [
+    {
+      floorNo: Number,
+      flateNo: Number,
+      rooms: [{ type: mongoose.Schema.Types.ObjectId, ref: "Room" }],
+    },
+  ],
   assignedWorkers: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -72,9 +79,13 @@ const projectSchema = new mongoose.Schema({
     type: Number,
     default: Math.floor(Date.now() / 1000),
   },
-  status:{
-    enum:["pending", "completed", "inprogress"]
-  }
+  status: {
+    enum: ["pending", "completed", "inprogress"],
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  },
 });
 
 module.exports = mongoose.model("Project", projectSchema);

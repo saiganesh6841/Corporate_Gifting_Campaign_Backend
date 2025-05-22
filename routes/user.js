@@ -3,6 +3,7 @@ const router = express.Router();
 const UserController = require("../api/controller/user/UserController");
 const { userAuth } = require("../middleware/userAuth");
 router.route("/accountLogin").post(UserController.login);
+router.route("/logout").get(UserController.logout);
 router.route("/verify/otp").post(UserController.verifyOtp);
 router.route("/profile").get(userAuth, UserController.userProfile);
 router.route("/upload/files").put(userAuth, UserController.uploadFiles);

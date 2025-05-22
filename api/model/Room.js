@@ -14,15 +14,12 @@ const roomSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
-  floorId: {
-    type: mongoose.Schema.ObjectId,
-    ref: "Floor",
-  },
-  description: {
-    type: String,
-    default: "",
-  },
-  roomIcon: {
+
+  //   description: {
+  //     type: String,
+  //     default: "",
+  //   },
+  roomLogo: {
     type: String,
     default: "",
   },
@@ -30,10 +27,10 @@ const roomSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
-  imageUrls: {
-    type: [imageSchema],
-    default: [],
-  },
+  //   imageUrls: {
+  //     type: [imageSchema],
+  //     default: [],
+  //   },
   createdAt: {
     type: Number,
     default: Math.floor(Date.now() / 1000),
@@ -41,6 +38,10 @@ const roomSchema = new mongoose.Schema({
   updatedAt: {
     type: Number,
     default: Math.floor(Date.now() / 1000),
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
   },
 });
 
