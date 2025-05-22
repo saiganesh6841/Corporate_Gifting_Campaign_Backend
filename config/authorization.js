@@ -1,7 +1,7 @@
 module.exports = {
   admin: {
     authNotRequire: [
-      "/admin",
+      // "/admin",
       "/accountLogin",
       "/verify/otp",
       "/create/user",

@@ -76,9 +76,9 @@ app.use(
 );
 app.use(cookieParser());
 
-app.use("/", function (req, res, next) {
-  AuthController.checkRequestAuth(req, res, next);
-});
+// app.use("/", function (req, res, next) {
+//   AuthController.checkRequestAuth(req, res, next);
+// });
 
 app.use("/user", user);
 app.use("/admin", admin);

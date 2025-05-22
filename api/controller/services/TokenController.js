@@ -4,13 +4,17 @@ const jwt = require("jsonwebtoken");
 module.exports = {
   verifyToken: (token) => {
     try {
-      var decoded = jwt.verify(token, passwordSecretKey);
+      const decoded = jwt.verify(token, passwordSecretKey);
       return decoded;
     } catch (err) {
-      // console.error("error in verify token--", err.name, err.message);
-      return err;
+      if (err.name === "TokenExpiredError") {
+        throw new Error("TokenExpired");
+      } else {
+        throw new Error("InvalidToken");
+      }
     }
   },
+
   createToken: (uid, expiresIn = 604800) => {
     try {
       var token = jwt.sign({ uid }, passwordSecretKey, {

@@ -1,6 +1,14 @@
+const configuration = require("../../../config/configuration");
 const { returnCode } = require("../../../config/responseCode");
 const User = require("../../model/User");
+const TokenController = require("../services/TokenController");
 const UtilController = require("../services/UtilController");
+const NodeCache = require("node-cache");
+
+const systemCache = new NodeCache({
+  stdTTL: 3600,
+  checkperiod: configuration.login.otpValidation,
+});
 
 module.exports = {
   accountLogin: async (req, res, next) => {
@@ -39,6 +47,12 @@ module.exports = {
         process.env.passwordSecretKey
       );
       if (userCode === returnCode.passwordMatched) {
+        systemCache.set(
+          req.sessionID,
+          user._id,
+          configuration.login.otpValidation
+        ); // 10 minute time
+        req.session.userType = user.userType;
         await module.exports.sendOtp(req, user);
       } else {
         //update password attempt
@@ -66,7 +80,7 @@ module.exports = {
       console.log("otp", otpVal);
 
       req.session.otpVal = otpVal;
-      console.log("sessionOtp", req.session.otpVal);
+      // console.log("sessionOtp", req.session.otpVal);
 
       //   NotificationController.sendUserOtp({
       //     mobileNo: userObj.mobileNo,
@@ -84,6 +98,51 @@ module.exports = {
   verifyOtp: async (req, res, next) => {
     try {
       let response = returnCode.invalidToken;
+      let isPasswordChange = req.body.isPasswordChange ?? false;
+      let userResult;
+
+      if (Number(req.body.otpVal) === Number(req.session.otpVal)) {
+        response = returnCode.validSession;
+        let userSes = systemCache.get(req.sessionID);
+
+        if (!(typeof userSes === "undefined" || userSes === null)) {
+          req.session.userId = userSes;
+          userResult = await User.findByIdAndUpdate(userSes, {
+            lastLogin: Math.floor(Date.now() / 1000),
+            passwordAttempt: 0,
+            isPasswordChange: isPasswordChange,
+          })
+            .select(" userType email fname lname mobileNo _id")
+            .lean();
+
+          const token = await TokenController.createToken(userResult._id);
+          console.log("token: ", token);
+
+          const isProduction = process.env.NODE_ENV === "production";
+
+          res.cookie("adminToken", token, {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? "none" : "strict",
+            maxAge: 30 * 24 * 60 * 60 * 1000,
+          });
+
+          req.session.userType = userResult.userType;
+          systemCache.del(req.sessionID);
+        } else {
+          response = returnCode.invalidToken;
+          return UtilController.sendError(req, res, next, {
+            responseCode: response,
+            message: "invalid session",
+          });
+        }
+      }
+
+      UtilController.sendSuccess(req, res, next, {
+        responseCode: response,
+        user: userResult,
+        message: "otp verified successfully",
+      });
     } catch (err) {
       console.log("err: ", err);
       UtilController.sendError(req, res, next, err);

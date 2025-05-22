@@ -12,6 +12,7 @@ AWS.config.update({
   region: awsConfig.aws.region,
 });
 var link = awsConfig.aws.link;
+const Otp = require("../../model/Otp");
 module.exports = {
   sendSuccess: async (req, res, next, data) => {
     if (module.exports.isEmpty(data.responseCode)) {
@@ -66,6 +67,23 @@ module.exports = {
     console.log("return otp= " + otpVal);
     return otpVal;
   },
+  // getOTP: async (userObj) => {
+  //   console.log("userObj: ", userObj);
+  //   try {
+  //     const payload = {
+  //       otp: "136799",
+  //       userId: userObj._id,
+  //     };
+  //     const saveOtp = await Otp.findOneAndUpdate(
+  //       { userId: userObj._id },
+  //       payload,
+  //       { new: true, upsert: true }
+  //     );
+  //     return saveOtp;
+  //   } catch (err) {
+  //     console.error(err);
+  //   }
+  // },
   checkEmailStatus: (userObj) => {
     let userCode = responseCode.accountSuspended; // user account is suspended/ deactivated, needs to check with admin team
     try {
