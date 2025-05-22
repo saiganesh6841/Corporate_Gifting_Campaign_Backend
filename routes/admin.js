@@ -15,7 +15,11 @@ router.route("/islogin").get(adminAuth, AuthController.accountLoginStatus);
 router.route("/logout").get(adminAuth, AuthController.logout);
 
 // user routes
+router.route("/user/getAll").post(adminAuth, UserController.getAllUser);
 router.route("/user/create").post(adminAuth, UserController.createUser);
+router.route("/user/get").post(adminAuth, UserController.getUserById);
+router.route("/user/update").post(adminAuth, UserController.updateUser);
+router.route("/user/delete").post(adminAuth, UserController.deleteUser);
 
 // roles routes
 router.route("/role/create/").post(adminAuth, RoleController.createRole);

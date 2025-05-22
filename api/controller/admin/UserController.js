@@ -6,6 +6,88 @@ const Role = require("../../model/Role");
 var CryptoJS = require("crypto-js");
 
 module.exports = {
+  getAllUser: async (req, res, next) => {
+    try {
+      const { ...filters } = req.query;
+      let queryObj = {
+        active: filters.active ?? true,
+      };
+      if (req.body.active === "all") {
+        delete queryObj.active;
+      }
+
+      let sortOrder = {};
+
+      sortOrder = {
+        createdAt: -1,
+      };
+
+      let page = 0;
+      let pageSize = 10;
+      if (
+        !UtilController.isEmpty(filters.page) &&
+        !UtilController.isEmpty(filters.pageSize)
+      ) {
+        page = Number(filters.page);
+        pageSize = Number(filters.pageSize);
+      }
+
+      let searchKey = filters.keyword ?? "";
+
+      if (!UtilController.isEmpty(filters.userType)) {
+        queryObj["userType"] = userType;
+      }
+
+      if (filters.userType === "all") {
+        delete queryObj.userType;
+      }
+
+      if (!UtilController.isEmpty(filters.startDate)) {
+        queryObj["$and"] = [
+          { createdAt: { $gte: filters.startDate } },
+          {
+            createdAt: {
+              $lte: filters.endDate || Math.floor(new Date() / 1000),
+            },
+          },
+        ];
+      }
+
+      if (!UtilController.isEmpty(searchKey)) {
+        queryObj["$or"] = [
+          { fullName: { $regex: searchKey, $options: "i" } },
+          { userId: { $regex: searchKey, $options: "i" } },
+          { userType: { $regex: searchKey, $options: "i" } },
+          { mobileNumber: { $regex: searchKey, $options: "i" } },
+          { email: { $regex: searchKey, $options: "i" } },
+        ];
+      }
+
+      const pipeline = [
+        {
+          $match: queryObj,
+        },
+        { $sort: sortOrder },
+        { $skip: page * pageSize },
+        { $limit: pageSize },
+      ];
+
+      const result = await User.aggregate(pipeline);
+      let pageCount = await User.countDocuments(queryObj);
+
+      UtilController.sendSuccess(req, res, next, {
+        rows: result,
+        pages: Math.ceil(pageCount / pageSize),
+        filterRecords: pageCount,
+        message: "success",
+        responseCode: returnCode.validSession,
+      });
+    } catch (error) {
+      console.log("error: ", error);
+      UtilController.sendError(req, res, error);
+    }
+  },
+
   createUser: async (req, res, next) => {
     try {
       let createObj = req.body;
@@ -49,13 +131,13 @@ module.exports = {
         );
         createObj["userId"] =
           tagResult.prefix + UtilController.pad(tagResult.sequenceNo, 5);
-        // createObj["createdBy"] = req.user?.userId;
+        createObj["createdBy"] = req.user?.userId;
 
         if (!UtilController.isEmpty(createObj?.password)) {
           const password = createObj.password;
           const encryptedPassword = CryptoJS.AES.encrypt(
             password,
-            process.env.ENCRYPTION_KEY
+            process.env.passwordSecretKey
           ).toString();
           createObj["password"] = encryptedPassword;
         }
@@ -84,7 +166,118 @@ module.exports = {
     }
   },
 
- 
+  getUserById: async (req, res, next) => {
+    try {
+      const { userId } = req.body;
+      if (UtilController.isEmpty(userId)) {
+        return UtilController.sendSuccess(req, res, next, {
+          message: "userId is required",
+          responseCode: returnCode.invalidInput,
+        });
+      }
+      const result = await User.findOne({ userId: userId });
+      if (UtilController.isEmpty(result)) {
+        return UtilController.sendSuccess(req, res, next, {
+          message: "user not found",
+          responseCode: returnCode.invalidInput,
+        });
+      }
+      UtilController.sendSuccess(req, res, next, {
+        rows: result,
+        message: "success",
+        responseCode: returnCode.validSession,
+      });
+    } catch (error) {
+      console.log("error: ", error);
+      UtilController.sendError(req, res, error);
+    }
+  },
 
-  queryAllWorkers: async (req, res, next) => {},
+  updateUser: async (req, res, next) => {
+    try {
+      const { userId, ...updateObj } = req.body;
+      console.log("userId: ", userId);
+      if (UtilController.isEmpty(userId)) {
+        return UtilController.sendSuccess(req, res, next, {
+          message: "userId is required",
+          responseCode: returnCode.invalidInput,
+        });
+      }
+
+      const existingUser = await User.findOne({
+        $or: [
+          { email: updateObj.email },
+          { mobileNumber: updateObj.mobileNumber },
+        ],
+        userId: { $ne: userId },
+        active: true,
+      });
+      console.log("existingUser: ", existingUser);
+
+      if (existingUser) {
+        return UtilController.sendSuccess(req, res, next, {
+          message: "email or mobile number already exists",
+          responseCode: returnCode.duplicate,
+        });
+      } else {
+        if (!UtilController.isEmpty(updateObj?.password)) {
+          const password = updateObj.password;
+          const encryptedPassword = CryptoJS.AES.encrypt(
+            password,
+            process.env.passwordSecretKey
+          ).toString();
+          updateObj["password"] = encryptedPassword;
+        }
+        const result = await User.findOneAndUpdate(
+          { userId: userId },
+          { $set: updateObj },
+          { new: true }
+        );
+        if (UtilController.isEmpty(result)) {
+          return UtilController.sendSuccess(req, res, next, {
+            message: "user not found",
+            responseCode: returnCode.invalidInput,
+          });
+        }
+        UtilController.sendSuccess(req, res, next, {
+          rows: result,
+          message: "success",
+          responseCode: returnCode.validSession,
+        });
+      }
+    } catch (error) {
+      console.log("error: ", error);
+      UtilController.sendError(req, res, error);
+    }
+  },
+  deleteUser: async (req, res, next) => {
+    try {
+      const { userId } = req.body;
+      if (UtilController.isEmpty(userId)) {
+        return UtilController.sendSuccess(req, res, next, {
+          message: "userId is required",
+          responseCode: returnCode.invalidInput,
+        });
+      }
+      const result = await User.findOneAndUpdate(
+        { userId: userId },
+        { $set: { active: false } },
+        { new: true }
+      );
+      if (UtilController.isEmpty(result)) {
+        return UtilController.sendSuccess(req, res, next, {
+          message: "user not found",
+          responseCode: returnCode.invalidInput,
+        });
+      }
+      UtilController.sendSuccess(req, res, next, {
+        rows: result,
+        message: "success",
+        responseCode: returnCode.validSession,
+      });
+    } catch (error) {
+      console.log("error: ", error);
+      UtilController.sendError(req, res, error);
+    }
+  },
 };
