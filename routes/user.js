@@ -6,5 +6,5 @@ router.route("/accountLogin").post(UserController.login);
 router.route("/logout").get(UserController.logout);
 router.route("/verify/otp").post(UserController.verifyOtp);
 router.route("/profile").get(userAuth, UserController.userProfile);
-router.route("/upload/files").put(userAuth, UserController.uploadFiles);
+router.route("/upload/files").put( UserController.uploadFiles);
 module.exports = router;

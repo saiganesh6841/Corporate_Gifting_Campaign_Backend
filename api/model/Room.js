@@ -10,6 +10,11 @@ const imageSchema = new mongoose.Schema(
 );
 
 const roomSchema = new mongoose.Schema({
+  roomId: {
+    type: String,
+    default: "",
+  },
+  
   roomName: {
     type: String,
     default: "",

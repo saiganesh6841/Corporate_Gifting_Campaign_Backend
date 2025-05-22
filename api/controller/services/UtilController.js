@@ -221,6 +221,10 @@ module.exports = {
     return s;
   },
 
+  convertToLowercase: async (name) => {
+    return name.toLowerCase();
+  },
+
   tagGenerator: async (tagType) => {
     try {
       const tag = await Tag.findOneAndUpdate(

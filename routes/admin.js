@@ -4,6 +4,7 @@ const UserController = require("../api/controller/admin/UserController");
 const ProjectController = require("../api/controller/admin/ProjectController");
 const AuthController = require("../api/controller/admin/AuthController");
 const RoleController = require("../api/controller/admin/RoleController");
+const RoomController = require("../api/controller/admin/RoomController");
 const { adminAuth } = require("../middleware/adminAuth");
 
 // authentication
@@ -20,4 +21,9 @@ router.route("/create/role").post(adminAuth, RoleController.createRole);
 router
   .route("/create/project")
   .post(adminAuth, ProjectController.createProject);
+
+//   room routes
+router.route("/room/create").post(adminAuth, RoomController.createRoom);
+router.route("/room/update").post(adminAuth, RoomController.updateRoom);
+
 module.exports = router;

@@ -33,20 +33,13 @@ module.exports = {
   },
 
   verifyOtp: async (req, res, next) => {
-    const userId = req?.user?.userId;
     const { otpId, otp } = req?.body;
-    if (!userId) {
-      return UtilController.sendError(req, res, next, {
-        message: "Invalid user",
-        responseCode: returnCode.invalidSession,
-      });
-    }
-    const user = await User.findById(userId);
-    const isOtpExist = await Otp.findOne({ userId: userId });
+    const isOtpExist = await Otp.findById(otpId);
+    const user = await User.findById(isOtpExist?.userId);
 
     if (otpId === isOtpExist._id.toString()) {
       if (otp === isOtpExist?.otp) {
-        const token = await createToken(userId);
+        const token = await createToken(user?._id);
         await Otp.findByIdAndDelete(otpId);
 
         return UtilController.sendSuccess(req, res, next, {
