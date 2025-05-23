@@ -6,6 +6,7 @@ const AuthController = require("../api/controller/admin/AuthController");
 const RoleController = require("../api/controller/admin/RoleController");
 const RoomController = require("../api/controller/admin/RoomController");
 const { adminAuth } = require("../middleware/adminAuth");
+const TaskController = require("../api/controller/admin/TaskController");
 
 // authentication
 router.route("/accountLogin").post(AuthController.accountLogin);
@@ -25,6 +26,9 @@ router.route("/user/delete").post(adminAuth, UserController.deleteUser);
 router
   .route("/project/create")
   .post(adminAuth, ProjectController.createProject);
+
+// task routes
+router.route("/task/create").post(adminAuth, TaskController.createTask);
 
 //   room routes
 router.route("/room/create").post(adminAuth, RoomController.createRoom);

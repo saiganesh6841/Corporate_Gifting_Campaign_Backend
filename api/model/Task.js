@@ -5,34 +5,35 @@ const taskSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  taskDescription: {
+    type: String,
+    default: "",
+  },
   projectId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Project",
+  },
+  floorNo: {
+    type: Number,
+    default: 0,
+  },
+  faltNo: {
+    type: Number,
+    default: 0,
   },
   workerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   },
-  floor: {
-    type: String,
-    default: "",
-  },
   room: {
-    type: String,
-    default: "",
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Room",
   },
-  task: [
-    {
-      taskId: {
-        type: String,
-        default: "",
-      },
-      taskDescription: {
-        type: String,
-        default: "",
-      },
-    },
-  ],
+  taskStatus: {
+    type: String,
+    enum: ["pending", "in-progress", "completed"],
+    default: "pending",
+  },
   updatedAt: {
     type: Number,
     default: () => Math.floor(Date.now() / 1000),

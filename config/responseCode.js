@@ -36,6 +36,7 @@ module.exports = {
     invalidInput: 135,
     success: 100, //	Success
     unAuthorized: 401, //	Unauthorized
+    internalServerError: 500, //	Internal server error
     errror: 600, //	Exception / server errror
   },
 };
