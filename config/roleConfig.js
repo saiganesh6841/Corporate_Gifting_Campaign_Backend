@@ -20,10 +20,14 @@ module.exports = {
           label: "delete",
           enable: true,
         },
+        {
+          label: "query",
+          enable: true,
+        },
       ],
     },
     {
-      label: "users",
+      label: "Users",
       enable: true,
       buttons: [
         {
@@ -42,10 +46,14 @@ module.exports = {
           label: "delete",
           enable: true,
         },
+        {
+          label: "query",
+          enable: true,
+        },
       ],
     },
     {
-      label: "project",
+      label: "Project",
       enable: true,
       buttons: [
         {
@@ -64,10 +72,14 @@ module.exports = {
           label: "delete",
           enable: true,
         },
+        {
+          label: "query",
+          enable: true,
+        },
       ],
     },
     {
-      label: "task",
+      label: "Task",
       enable: true,
       buttons: [
         {
@@ -86,10 +98,14 @@ module.exports = {
           label: "delete",
           enable: true,
         },
+        {
+          label: "query",
+          enable: true,
+        },
       ],
     },
     {
-      label: "attendence",
+      label: "Attendence",
       enable: true,
       buttons: [
         {
@@ -108,10 +124,14 @@ module.exports = {
           label: "delete",
           enable: true,
         },
+        {
+          label: "query",
+          enable: true,
+        },
       ],
     },
     {
-      label: "role",
+      label: "Role",
       enable: true,
       buttons: [
         {
@@ -130,10 +150,14 @@ module.exports = {
           label: "delete",
           enable: true,
         },
+        {
+          label: "query",
+          enable: true,
+        },
       ],
     },
     {
-      label: "logo",
+      label: "Logo",
       enable: true,
       buttons: [
         {
@@ -152,10 +176,14 @@ module.exports = {
           label: "delete",
           enable: true,
         },
+        {
+          label: "query",
+          enable: true,
+        },
       ],
     },
     {
-      label: "timesheet",
+      label: "Timesheet",
       enable: true,
       buttons: [
         {
@@ -174,10 +202,24 @@ module.exports = {
           label: "delete",
           enable: true,
         },
+        {
+          label: "query",
+          enable: true,
+        },
       ],
     },
     {
-      label: "progressTimeline",
+      label: "ProgressTimeline",
+      enable: true,
+      buttons: [],
+    },
+    {
+      label: "Settings",
+      enable: true,
+      buttons: [],
+    },
+    {
+      label: "Security",
       enable: true,
       buttons: [],
     },
