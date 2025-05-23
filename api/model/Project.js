@@ -44,7 +44,7 @@ const projectSchema = new mongoose.Schema({
   details: [
     {
       floorNo: Number,
-      flateNo: Number,
+      flatNo: Number,
       rooms: [{ type: mongoose.Schema.Types.ObjectId, ref: "Room" }],
     },
   ],
@@ -64,13 +64,16 @@ const projectSchema = new mongoose.Schema({
   isSupervisorAssigned: {
     type: Boolean,
   },
+  status: {
+    type: String,
+    enum: ["pending", "completed", "inprogress"],
+    default: "pending",
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  },
 
-  rooms: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Room",
-    },
-  ],
   createdAt: {
     type: Number,
     default: Math.floor(Date.now() / 1000),
@@ -78,13 +81,6 @@ const projectSchema = new mongoose.Schema({
   updatedAt: {
     type: Number,
     default: Math.floor(Date.now() / 1000),
-  },
-  status: {
-    enum: ["pending", "completed", "inprogress"],
-  },
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
   },
 });
 

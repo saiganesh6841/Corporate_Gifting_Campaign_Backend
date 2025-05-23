@@ -21,9 +21,7 @@ router.route("/user/get").post(adminAuth, UserController.getUserById);
 router.route("/user/update").post(adminAuth, UserController.updateUser);
 router.route("/user/delete").post(adminAuth, UserController.deleteUser);
 
-// roles routes
-router.route("/role/create/").post(adminAuth, RoleController.createRole);
-
+// project routes
 router
   .route("/project/create")
   .post(adminAuth, ProjectController.createProject);
@@ -31,5 +29,8 @@ router
 //   room routes
 router.route("/room/create").post(adminAuth, RoomController.createRoom);
 router.route("/room/update").post(adminAuth, RoomController.updateRoom);
+
+// roles routes
+router.route("/role/create/").post(adminAuth, RoleController.createRole);
 
 module.exports = router;

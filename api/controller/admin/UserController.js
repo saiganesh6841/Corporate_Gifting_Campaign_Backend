@@ -8,7 +8,7 @@ var CryptoJS = require("crypto-js");
 module.exports = {
   getAllUser: async (req, res, next) => {
     try {
-      const { ...filters } = req.query;
+      const { ...filters } = req.body;
       let queryObj = {
         active: filters.active ?? true,
       };
@@ -35,7 +35,7 @@ module.exports = {
       let searchKey = filters.keyword ?? "";
 
       if (!UtilController.isEmpty(filters.userType)) {
-        queryObj["userType"] = userType;
+        queryObj["userType"] = filters.userType;
       }
 
       if (filters.userType === "all") {
@@ -62,6 +62,8 @@ module.exports = {
           { email: { $regex: searchKey, $options: "i" } },
         ];
       }
+
+      // console.log("queryObj: ", queryObj);
 
       const pipeline = [
         {
@@ -91,7 +93,7 @@ module.exports = {
   createUser: async (req, res, next) => {
     try {
       let createObj = req.body;
-      const permissionId = createObj?.permissionId;
+      const permissionId = createObj?.permission;
 
       if (
         UtilController.isEmpty(createObj?.fullName) ||

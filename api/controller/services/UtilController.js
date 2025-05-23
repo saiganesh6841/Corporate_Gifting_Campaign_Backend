@@ -25,7 +25,7 @@ module.exports = {
     });
   },
   convertToMongoose: (id) => {
-    return mongoose.Types.ObjectId(id);
+    return new mongoose.Types.ObjectId(id);
   },
   sendError: async (req, res, next, err) => {
     // console.error(err);

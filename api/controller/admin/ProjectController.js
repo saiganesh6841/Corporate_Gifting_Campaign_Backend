@@ -6,21 +6,18 @@ const UtilController = require("../services/UtilController");
 
 module.exports = {
   createProject: async (req, res, next) => {
-    const createObj = req?.body;
+    try {
+      const { ...createObj } = req.body;
+      console.log("createObj: ", createObj);
 
-    let alreadyExistingProject = await Project.findOne({
-      active: true,
-      projectName: createObj?.projectName,
-    });
+      const { userId } = req.user;
 
-    if (alreadyExistingProject) {
-      return UtilController.sendSuccess(req, res, next, {
-        message: "Project already exists",
-        responseCode: returnCode.duplicate,
-      });
-    } else {
-      const createdRooms = await Room.insertMany(createObj?.rooms);
-      const roomIds = createdRooms?.map((room) => room._id);
+      if (!userId) {
+        return UtilController.sendError(req, res, next, {
+          message: "User not found",
+          responseCode: returnCode.invalidSession,
+        });
+      }
 
       const tagResult = await Tag.findOneAndUpdate(
         {
@@ -34,12 +31,22 @@ module.exports = {
       );
       createObj["projectId"] =
         tagResult.prefix + UtilController.pad(tagResult.sequenceNo, 5);
-      const newProject = await Project.create({ ...createObj, rooms: roomIds });
+
+      const projectResult = await Project.create({
+        ...createObj,
+        createdBy: userId,
+      });
 
       return UtilController.sendSuccess(req, res, next, {
         message: "Project created successfully",
         responseCode: returnCode.validSession,
-        projectDetails: newProject,
+        projectResult,
+      });
+    } catch (error) {
+      console.log('error: ', error);
+      UtilController.sendError(req, res, next, {
+        message: "Something went wrong",
+        responseCode: returnCode.internalServerError,
       });
     }
   },
