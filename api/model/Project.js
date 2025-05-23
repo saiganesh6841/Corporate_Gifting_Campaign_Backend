@@ -41,11 +41,17 @@ const projectSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
-  details: [
+
+  floorId: [
     {
-      floorNo: Number,
-      flatNo: Number,
-      rooms: [{ type: mongoose.Schema.Types.ObjectId, ref: "Room" }],
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ProjectFloors",
+    },
+  ],
+  roomId: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ProjectRooms",
     },
   ],
   assignedWorkers: [

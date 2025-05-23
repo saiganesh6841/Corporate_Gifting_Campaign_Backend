@@ -7,7 +7,7 @@ const UtilController = require("../services/UtilController");
 module.exports = {
   createProject: async (req, res, next) => {
     try {
-      const { ...createObj } = req.body;
+      const { mobileNumber, email, ...createObj } = req.body;
       console.log("createObj: ", createObj);
 
       const { userId } = req.user;
@@ -32,10 +32,14 @@ module.exports = {
       createObj["projectId"] =
         tagResult.prefix + UtilController.pad(tagResult.sequenceNo, 5);
 
-      const projectResult = await Project.create({
-        ...createObj,
-        createdBy: userId,
-      });
+      // const projectResult = await Project.create({
+      //   ...createObj,
+      //   clientPhoneNo: mobileNumber,
+      //   clientEmail: email,
+      //   createdBy: userId,
+      // });
+
+      console.log("projectResult: ", projectResult._id);
 
       return UtilController.sendSuccess(req, res, next, {
         message: "Project created successfully",
@@ -43,7 +47,7 @@ module.exports = {
         projectResult,
       });
     } catch (error) {
-      console.log('error: ', error);
+      console.log("error: ", error);
       UtilController.sendError(req, res, next, {
         message: "Something went wrong",
         responseCode: returnCode.internalServerError,

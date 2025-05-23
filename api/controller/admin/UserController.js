@@ -38,7 +38,7 @@ module.exports = {
         queryObj["userType"] = filters.userType;
       }
 
-      if (filters.userType === "all") {
+      if (filters.userType === "All") {
         delete queryObj.userType;
       }
 
