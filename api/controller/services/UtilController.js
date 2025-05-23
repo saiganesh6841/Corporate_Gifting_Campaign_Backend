@@ -225,6 +225,21 @@ module.exports = {
     return name.toLowerCase();
   },
 
+  convertTOISOFormat: () => new Date().toISOString().split("T")[0],
+
+  convertToDateFormat: (timestampInSeconds) => {
+    const date = new Date(timestampInSeconds * 1000);
+    const istDate = date.toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+
+    const [day, month, year] = istDate.split("/");
+    return `${year}-${month}-${day}`;
+  },
+
   tagGenerator: async (tagType) => {
     try {
       const tag = await Tag.findOneAndUpdate(

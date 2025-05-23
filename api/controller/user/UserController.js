@@ -16,6 +16,14 @@ module.exports = {
         responseCode: returnCode.recordNotFound,
       });
     }
+
+    if (isUserExist?.userType !== "worker") {
+      return UtilController.sendError(req, res, next, {
+        message: "You don't have the access",
+        responseCode: returnCode.invalidSession,
+      });
+    }
+
     {
       const otp = UtilController.getOTP();
       otpObject = {

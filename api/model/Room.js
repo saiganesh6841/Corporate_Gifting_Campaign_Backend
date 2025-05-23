@@ -14,7 +14,7 @@ const roomSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
-  
+
   roomName: {
     type: String,
     default: "",
@@ -47,6 +47,10 @@ const roomSchema = new mongoose.Schema({
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
+  },
+  active: {
+    type: Boolean,
+    default: true,
   },
 });
 

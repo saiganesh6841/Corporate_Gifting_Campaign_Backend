@@ -76,7 +76,7 @@ module.exports = {
     const lowerCaseRoomName = await UtilController.convertToLowercase(roomName);
 
     const isRoomExists = await Room.findById(roomId);
-    
+
     if (!isRoomExists) {
       return UtilController.sendError(req, res, next, {
         message: "Room not found",
@@ -99,6 +99,33 @@ module.exports = {
       message: "successfully updated room",
       responseCode: returnCode.validSession,
       roomResult: updatedRoom,
+    });
+  },
+
+  deleteRoom: async (req, res, next) => {
+    const { userId } = req.user;
+    if (!userId) {
+      return UtilController.sendError(req, res, next, {
+        message: "User not found",
+        responsCode: returnCode.invalidSession,
+      });
+    }
+
+    const { roomId } = req.body;
+
+    await Room.findByIdAndUpdate(
+      roomId,
+      {
+        $set: {
+          active: false,
+        },
+      },
+      { new: true }
+    );
+
+    return UtilController.sendSuccess(req, res, next, {
+      message: "Successfully deleted the room",
+      responseCode: returnCode.validSession,
     });
   },
 };
