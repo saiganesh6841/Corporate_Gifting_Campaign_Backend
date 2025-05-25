@@ -41,19 +41,9 @@ const projectSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
-
-  floorId: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "ProjectFloors",
-    },
-  ],
-  roomId: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "ProjectRooms",
-    },
-  ],
+  uploadImage: {
+    type: String,
+  },
   assignedWorkers: [
     {
       type: mongoose.Schema.Types.ObjectId,

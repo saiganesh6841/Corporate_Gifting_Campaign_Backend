@@ -12,7 +12,7 @@ module.exports = {
       let queryObj = {
         active: filters.active ?? true,
       };
-      if (req.body.active === "all") {
+      if (filters.active === "all") {
         delete queryObj.active;
       }
 
@@ -261,8 +261,8 @@ module.exports = {
           responseCode: returnCode.invalidInput,
         });
       }
-      const result = await User.findOneAndUpdate(
-        { userId: userId },
+      const result = await User.updateMany(
+        { userId: { $in: userId } },
         { $set: { active: false } },
         { new: true }
       );

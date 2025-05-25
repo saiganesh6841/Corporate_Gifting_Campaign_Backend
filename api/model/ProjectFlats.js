@@ -1,9 +1,17 @@
 const mongoose = require("mongoose");
-const floorSchema = mongoose.Schema({
-  flatId: {
-    type: String,
-    default: "",
+const imageSchema = new mongoose.Schema(
+  {
+    type: { type: String, default: "" },
+    name: { type: String, default: "" },
+    url: { type: String, required: true },
   },
+  { _id: false }
+);
+const floorSchema = mongoose.Schema({
+  // flatId: {
+  //   type: String,
+  //   default: "",
+  // },
   flatNo: {
     type: Number,
     default: 0,
@@ -16,6 +24,12 @@ const floorSchema = mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     ref: "Project",
   },
+  rooms: [
+    {
+      roomId: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
+      roomImages: [imageSchema],
+    },
+  ],
   active: {
     type: Boolean,
     default: true,
