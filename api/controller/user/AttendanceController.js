@@ -13,7 +13,6 @@ module.exports = {
       }
 
       const currentDate = await UtilController.convertTOISOFormat();
-      //   const currentDate = "2025-05-24";
 
       const createObj = {
         userId: await UtilController.convertToMongoose(userId),
