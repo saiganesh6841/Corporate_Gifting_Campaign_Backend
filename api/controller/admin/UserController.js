@@ -186,14 +186,21 @@ module.exports = {
           responseCode: returnCode.invalidInput,
         });
       }
-      const result = await User.findOne({ userId: userId }).populate(
-        "permission"
-      );
+      const result = await User.findOne({ userId: userId })
+        .populate("permission", "name _id")
+        .lean();
       if (UtilController.isEmpty(result)) {
         return UtilController.sendSuccess(req, res, next, {
           message: "user not found",
           responseCode: returnCode.invalidInput,
         });
+      }
+      if (result.password) {
+        const bytes = CryptoJS.AES.decrypt(
+          result.password,
+          process.env.passwordSecretKey
+        );
+        result.password = bytes.toString(CryptoJS.enc.Utf8);
       }
       UtilController.sendSuccess(req, res, next, {
         rows: result,
