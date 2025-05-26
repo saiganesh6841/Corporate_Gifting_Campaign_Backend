@@ -16,11 +16,9 @@ module.exports = {
 
       const { roomName, color, roomLogo } = req.body;
 
-      const lowerCaseRoomName = await UtilController.convertToLowercase(
-        roomName
-      );
-
-      const isRoomExists = await Room.findOne({ roomName: lowerCaseRoomName });
+      const isRoomExists = await Room.findOne({
+        roomName: { $regex: `^${roomName}$`, $options: "i" },
+      });
 
       if (isRoomExists) {
         return UtilController.sendError(req, res, next, {
@@ -45,7 +43,7 @@ module.exports = {
 
       const createRoomObj = {
         roomId,
-        roomName: lowerCaseRoomName,
+        roomName,
         color,
         roomLogo,
         createdBy: userId,
@@ -72,10 +70,9 @@ module.exports = {
       });
     }
 
-    const { roomId, roomName } = req.body;
-    const lowerCaseRoomName = await UtilController.convertToLowercase(roomName);
+    const { recordId, roomName } = req.body;
 
-    const isRoomExists = await Room.findById(roomId);
+    const isRoomExists = await Room.findById(recordId);
 
     if (!isRoomExists) {
       return UtilController.sendError(req, res, next, {
@@ -83,18 +80,20 @@ module.exports = {
         responseCode: returnCode.invalidSession,
       });
     }
-
+    if (isRoomExists._id.toString() !== recordId) {
+      return UtilController.sendError(req, res, next, {
+        message: "Room name already exists",
+        responseCode: returnCode.duplicate,
+      });
+    }
     const updatedRoom = await Room.findByIdAndUpdate(
-      roomId,
+      recordId,
       {
-        $set: {
-          roomName: lowerCaseRoomName,
-          ...req.body,
-        },
+        ...req.body,
+        updatedAt: Math.floor(Date.now() / 1000),
       },
       { new: true }
     );
-
     return UtilController.sendSuccess(req, res, next, {
       message: "successfully updated room",
       responseCode: returnCode.validSession,
@@ -103,6 +102,41 @@ module.exports = {
   },
 
   deleteRoom: async (req, res, next) => {
+    try {
+      const { userId } = req.user;
+
+      if (!userId) {
+        return UtilController.sendError(req, res, next, {
+          message: "User not found",
+          responseCode: returnCode.invalidSession,
+        });
+      }
+
+      const { roomIds } = req.body;
+
+      if (!Array.isArray(roomIds) || roomIds.length === 0) {
+        return UtilController.sendSuccess(req, res, next, {
+          message: "roomIds array is required",
+          responseCode: returnCode.invalidInput,
+        });
+      }
+
+      await Room.updateMany(
+        { _id: { $in: roomIds } },
+        { $set: { active: false } }
+      );
+
+      return UtilController.sendSuccess(req, res, next, {
+        message: "Successfully deleted the rooms",
+        responseCode: returnCode.validSession,
+      });
+    } catch (error) {
+      console.log("error: ", error);
+      return UtilController.sendError(req, res, error);
+    }
+  },
+
+  getAllRoom: async (req, res, next) => {
     const { userId } = req.user;
     if (!userId) {
       return UtilController.sendError(req, res, next, {
@@ -111,21 +145,42 @@ module.exports = {
       });
     }
 
-    const { roomId } = req.body;
-
-    await Room.findByIdAndUpdate(
-      roomId,
-      {
-        $set: {
-          active: false,
-        },
-      },
-      { new: true }
-    );
+    const rooms = await Room.find({ active: true });
 
     return UtilController.sendSuccess(req, res, next, {
-      message: "Successfully deleted the room",
+      message: "Successfully fetched all rooms",
       responseCode: returnCode.validSession,
+      rooms,
     });
+  },
+  getRoomById: async (req, res, next) => {
+    try {
+      const { userId } = req.user;
+      if (!userId) {
+        return UtilController.sendError(req, res, next, {
+          message: "User not found",
+          responsCode: returnCode.invalidSession,
+        });
+      }
+
+      const { recordId } = req.body;
+
+      const room = await Room.findById(recordId);
+
+      if (!room) {
+        return UtilController.sendError(req, res, next, {
+          message: "Room not found",
+          responseCode: returnCode.invalidSession,
+        });
+      }
+
+      return UtilController.sendSuccess(req, res, next, {
+        message: "Successfully fetched the room",
+        responseCode: returnCode.validSession,
+        room,
+      });
+    } catch (error) {
+      utilController.sendError(req, res, next, error);
+    }
   },
 };

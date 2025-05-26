@@ -34,6 +34,8 @@ router.route("/task/create").post(adminAuth, TaskController.createTask);
 router.route("/room/create").post(adminAuth, RoomController.createRoom);
 router.route("/room/update").post(adminAuth, RoomController.updateRoom);
 router.route("/room/delete").post(adminAuth, RoomController.deleteRoom);
+router.route("/room/getAll").post(adminAuth, RoomController.getAllRoom);
+router.route("/room/get").post(adminAuth, RoomController.getRoomById);
 
 // roles routes
 router.route("/role/create").post(adminAuth, RoleController.createRole);
