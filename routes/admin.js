@@ -40,5 +40,8 @@ router.route("/room/get").post(adminAuth, RoomController.getRoomById);
 // roles routes
 router.route("/role/create").post(adminAuth, RoleController.createRole);
 router.route("/role/list").post(adminAuth, RoleController.listRole);
+router.route("/role/get").post(adminAuth, RoleController.getRoleById);
+router.route("/role/update").post(adminAuth, RoleController.updateRole);
+router.route("/role/delete").post(adminAuth, RoleController.deleteRole);
 
 module.exports = router;

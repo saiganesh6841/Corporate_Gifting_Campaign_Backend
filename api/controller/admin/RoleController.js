@@ -128,4 +128,95 @@ module.exports = {
       UtilController.sendError(req, res, next, err);
     }
   },
+  getRoleById: async (req, res, next) => {
+    try {
+      const { recordId } = req.body;
+      if (!recordId) {
+        return UtilController.sendError(req, res, next, {
+          message: "Role ID is required",
+          responseCode: returnCode.invalidRequest,
+        });
+      }
+
+      const role = await Role.findById(recordId).lean();
+      if (!role) {
+        return UtilController.sendError(req, res, next, {
+          message: "Role not found",
+          responseCode: returnCode.notFound,
+        });
+      }
+
+      UtilController.sendSuccess(req, res, next, {
+        data: role,
+        message: "Role retrieved successfully",
+        responseCode: returnCode.validSession,
+      });
+    } catch (err) {
+      console.log("err: ", err);
+      UtilController.sendError(req, res, next, err);
+    }
+  },
+  updateRole: async (req, res, next) => {
+    try {
+      const { recordId, ...updateObj } = req.body;
+      if (!recordId) {
+        return UtilController.sendError(req, res, next, {
+          message: "Role ID is required",
+          responseCode: returnCode.invalidRequest,
+        });
+      }
+
+      const role = await Role.findByIdAndUpdate(
+        recordId,
+        { $set: updateObj },
+        { new: true }
+      ).lean();
+
+      if (!role) {
+        return UtilController.sendError(req, res, next, {
+          message: "Role not found",
+          responseCode: returnCode.notFound,
+        });
+      }
+
+      UtilController.sendSuccess(req, res, next, {
+        data: role,
+        message: "Role updated successfully",
+        responseCode: returnCode.validSession,
+      });
+    } catch (err) {
+      console.log("err: ", err);
+      UtilController.sendError(req, res, next, err);
+    }
+  },
+  deleteRole: async (req, res, next) => {
+    try {
+      const { recordIds } = req.body;
+      if (!recordIds) {
+        return UtilController.sendError(req, res, next, {
+          message: "Role ID is required",
+          responseCode: returnCode.invalidRequest,
+        });
+      }
+      if (!Array.isArray(recordIds) || recordIds.length === 0) {
+        return UtilController.sendSuccess(req, res, next, {
+          message: "roleid array is required",
+          responseCode: returnCode.invalidInput,
+        });
+      }
+
+      await Role.updateMany(
+        { _id: { $in: recordIds } },
+        { $set: { active: false } }
+      );
+
+      UtilController.sendSuccess(req, res, next, {
+        message: "Role deleted successfully",
+        responseCode: returnCode.validSession,
+      });
+    } catch (err) {
+      console.log("err: ", err);
+      UtilController.sendError(req, res, next, err);
+    }
+  },
 };

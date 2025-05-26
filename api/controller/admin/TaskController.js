@@ -39,6 +39,7 @@ module.exports = {
           ...createObj,
           taskId: taskId,
           taskDescription: taskItem.taskDescription,
+          taskStatus: taskItem.taskStatus || "pending",
           createdBy: userId,
         };
 
