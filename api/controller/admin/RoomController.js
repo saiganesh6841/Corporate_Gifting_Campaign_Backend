@@ -137,21 +137,94 @@ module.exports = {
   },
 
   getAllRoom: async (req, res, next) => {
-    const { userId } = req.user;
-    if (!userId) {
-      return UtilController.sendError(req, res, next, {
-        message: "User not found",
-        responsCode: returnCode.invalidSession,
+    try {
+      const { ...filters } = req.body;
+      let queryObj = {
+        active: filters.active ?? true,
+      };
+      if (filters.active === "All") {
+        delete queryObj.active;
+      }
+
+      let sortOrder = {};
+
+      sortOrder = {
+        createdAt: -1,
+      };
+
+      let page = 0;
+      let pageSize = 10;
+      if (
+        !UtilController.isEmpty(filters.page) &&
+        !UtilController.isEmpty(filters.pageSize)
+      ) {
+        page = Number(filters.page);
+        pageSize = Number(filters.pageSize);
+      }
+
+      let searchKey = filters.keyword ?? "";
+
+      if (!UtilController.isEmpty(filters.startDate)) {
+        queryObj["$and"] = [
+          { createdAt: { $gte: filters.startDate } },
+          {
+            createdAt: {
+              $lte: filters.endDate || Math.floor(new Date() / 1000),
+            },
+          },
+        ];
+      }
+
+      if (!UtilController.isEmpty(searchKey)) {
+        queryObj["$or"] = [
+          { roomId: { $regex: searchKey, $options: "i" } },
+          { roomName: { $regex: searchKey, $options: "i" } },
+        ];
+      }
+      const pipeline = [
+        {
+          $match: queryObj,
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "createdBy",
+            foreignField: "_id",
+            as: "createdByUser",
+          },
+        },
+        {
+          $project: {
+            roomId: 1,
+            roomName: 1,
+            roomLogo: 1,
+            color: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            active: 1,
+            createdBy: {
+              $arrayElemAt: ["$createdByUser.fullName", 0],
+            },
+          },
+        },
+        { $sort: sortOrder },
+        { $skip: page * pageSize },
+        { $limit: pageSize },
+      ];
+
+      const result = await Room.aggregate(pipeline);
+      let pageCount = await Room.countDocuments(queryObj);
+
+      UtilController.sendSuccess(req, res, next, {
+        rows: result,
+        pages: Math.ceil(pageCount / pageSize),
+        filterRecords: pageCount,
+        message: "success",
+        responseCode: returnCode.validSession,
       });
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
     }
-
-    const rooms = await Room.find({ active: true });
-
-    return UtilController.sendSuccess(req, res, next, {
-      message: "Successfully fetched all rooms",
-      responseCode: returnCode.validSession,
-      rooms,
-    });
   },
   getRoomById: async (req, res, next) => {
     try {
@@ -180,7 +253,7 @@ module.exports = {
         room,
       });
     } catch (error) {
-      utilController.sendError(req, res, next, error);
+      UtilController.sendError(req, res, next, error);
     }
   },
 };
