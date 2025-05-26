@@ -12,7 +12,7 @@ module.exports = {
       let queryObj = {
         active: filters.active ?? true,
       };
-      if (filters.active === "all") {
+      if (filters.active === "All") {
         delete queryObj.active;
       }
 

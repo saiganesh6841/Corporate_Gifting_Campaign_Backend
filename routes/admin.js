@@ -36,6 +36,7 @@ router.route("/room/update").post(adminAuth, RoomController.updateRoom);
 router.route("/room/delete").post(adminAuth, RoomController.deleteRoom);
 
 // roles routes
-router.route("/role/create/").post(adminAuth, RoleController.createRole);
+router.route("/role/create").post(adminAuth, RoleController.createRole);
+router.route("/role/list").post(adminAuth, RoleController.listRole);
 
 module.exports = router;
