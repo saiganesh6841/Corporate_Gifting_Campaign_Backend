@@ -177,7 +177,9 @@ module.exports = {
           responseCode: returnCode.invalidInput,
         });
       }
-      const result = await User.findOne({ userId: userId });
+      const result = await User.findOne({ userId: userId }).populate(
+        "permission"
+      );
       if (UtilController.isEmpty(result)) {
         return UtilController.sendSuccess(req, res, next, {
           message: "user not found",
