@@ -145,7 +145,6 @@ module.exports = {
 
       // Loop through each floor to gather its flats and rooms
       for (const floor of floorResult) {
-
         // Fetch flats and room details for each floor
         const flatsWithRooms = await Flat.aggregate([
           {
@@ -177,7 +176,7 @@ module.exports = {
           },
           {
             $lookup: {
-              from: "rooms", 
+              from: "rooms",
               localField: "rooms.roomId",
               foreignField: "_id",
               as: "roomDetails",
@@ -190,13 +189,18 @@ module.exports = {
             },
           },
           {
+            $addFields: {
+              "roomDetails.roomImages": "$rooms.roomImages",
+            },
+          },
+          {
             $group: {
               _id: "$flatNo",
               flatId: { $first: "$_id" },
-              floorId: { $first: "$floorId" }, 
-              projectId: { $first: "$projectId" }, 
-              active: { $first: "$active" }, 
-              rooms: { $push: "$roomDetails" }, 
+              floorId: { $first: "$floorId" },
+              projectId: { $first: "$projectId" },
+              active: { $first: "$active" },
+              rooms: { $push: "$roomDetails" },
             },
           },
         ]);
@@ -206,7 +210,7 @@ module.exports = {
           flats: flatsWithRooms.map((flat) => ({
             flatId: flat.flatId,
             flatNo: flat._id,
-            rooms: flat.rooms, 
+            rooms: flat.rooms,
           })),
         };
 
