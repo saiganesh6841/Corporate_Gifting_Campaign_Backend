@@ -97,45 +97,43 @@ module.exports = {
     }
   },
 
- queryAllCheckins: async (req, res, next) => {
-  try {
-    const { userId } = req.user;
-    const { date } = req.query;
+  queryAllCheckins: async (req, res, next) => {
+    try {
+      const { userId } = req.user;
+      const { date } = req.query;
 
-    if (!userId) {
-      return UtilController.sendError(req, res, next, {
-        message: "User not found",
-        responseCode: returnCode.invalidSession,
-      });
-    }
+      if (!userId) {
+        return UtilController.sendError(req, res, next, {
+          message: "User not found",
+          responseCode: returnCode.invalidSession,
+        });
+      }
 
-    let query = { userId, active: true };
+      let query = { userId, active: true };
 
-    if (date) {
-      const convertedDate = await UtilController.convertToDateFormat(date);
-      query.attendanceDate = convertedDate;
+      if (date) {
+        const convertedDate = await UtilController.convertToDateFormat(date);
+        query.attendanceDate = convertedDate;
 
-      const result = await Attendance.findOne(query);
+        const result = await Attendance.findOne(query);
+
+        return UtilController.sendSuccess(req, res, next, {
+          message: "Successfully fetched attendance",
+          responseCode: returnCode.validSession,
+          result: [result],
+        });
+      }
+
+      // If no date provided, return list sorted by latest
+      const result = await Attendance.find(query).sort({ createdAt: -1 });
 
       return UtilController.sendSuccess(req, res, next, {
-        message: "Successfully fetched attendance",
+        message: "Successfully fetched all attendance records",
         responseCode: returnCode.validSession,
-        result,
+        result: result,
       });
+    } catch (error) {
+      return UtilController.sendError(req, res, next, error);
     }
-
-    // If no date provided, return list sorted by latest
-    const result = await Attendance.find(query).sort({ createdAt: -1 });
-
-    return UtilController.sendSuccess(req, res, next, {
-      message: "Successfully fetched all attendance records",
-      responseCode: returnCode.validSession,
-      result,
-    });
-    
-  } catch (error) {
-    return UtilController.sendError(req, res, next, error);
-  }
-},
-
+  },
 };

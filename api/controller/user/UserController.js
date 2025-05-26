@@ -35,7 +35,9 @@ module.exports = {
       return UtilController.sendSuccess(req, res, next, {
         message: "Successfully send OTP to the registered mobile number",
         responseCode: returnCode.validSession,
-        otpId: otpResult?._id,
+        result: {
+          otpId: otpResult?._id,
+        },
       });
     }
   },
@@ -53,8 +55,10 @@ module.exports = {
         return UtilController.sendSuccess(req, res, next, {
           message: "OTP verified succesfully",
           responseCode: returnCode.validSession,
-          user,
-          token,
+          result: {
+            user,
+            token,
+          },
         });
       } else {
         return UtilController.sendError(req, res, next, {
@@ -84,7 +88,9 @@ module.exports = {
     return UtilController.sendSuccess(req, res, next, {
       message: "successfully fetched user details",
       responseCode: returnCode.validSession,
-      userDetails: user,
+      result: {
+        userDetails: user,
+      },
     });
   },
 

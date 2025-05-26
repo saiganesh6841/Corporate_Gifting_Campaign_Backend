@@ -225,6 +225,26 @@ module.exports = {
     return name.toLowerCase();
   },
 
+  getStartAndEndOfDay: (currentDate) => {
+    if (currentDate < 1e12) {
+      // less than 1 trillion = seconds
+      currentDate *= 1000;
+    }
+
+    // Get the start of the day
+    const startOfDay = new Date(currentDate);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    // Get the end of the day
+    const endOfDay = new Date(currentDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    return {
+      startOfDay: Math.floor(startOfDay.getTime() / 1000),
+      endOfDay: Math.floor(endOfDay.getTime() / 1000),
+    };
+  },
+
   convertTOISOFormat: () => new Date().toISOString().split("T")[0],
 
   convertToDateFormat: (timestampInSeconds) => {
