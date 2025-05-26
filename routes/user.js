@@ -17,14 +17,21 @@ router.route("/profile").get(userAuth, UserController.userProfile);
 
 // project routes
 router.route("/project/list").get(userAuth, ProjectController.queryProjects);
-router.route("/project/count").get(userAuth, ProjectController.projectAndTaskCounts);
+router
+  .route("/project/count")
+  .get(userAuth, ProjectController.projectAndTaskCounts);
+router
+  .route("/project/details")
+  .post(userAuth, ProjectController.projectDetails);
 
 // file upload routes
-router.route("/upload/files").put( UserController.uploadFiles);
+router.route("/upload/files").put(UserController.uploadFiles);
 
 // attendance routes
 router.route("/checkIn").get(userAuth, AttendanceController.checkIn);
 router.route("/checkOut").get(userAuth, AttendanceController.checkOut);
-router.route("/checkIns/list").get(userAuth, AttendanceController.queryAllCheckins);
+router
+  .route("/checkIns/list")
+  .get(userAuth, AttendanceController.queryAllCheckins);
 
 module.exports = router;

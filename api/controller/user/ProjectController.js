@@ -9,67 +9,30 @@ const mongoose = require("mongoose");
 
 module.exports = {
   queryProjects: async (req, res, next) => {
-    let { userId } = req.user;
+    try {
+      let { userId } = req.user;
 
-    if (!userId) {
-      return UtilController.sendError(req, res, next, {
-        message: "User not found",
-        responsCode: returnCode.invalidSession,
+      if (!userId) {
+        return UtilController.sendError(req, res, next, {
+          message: "User not found",
+          responsCode: returnCode.invalidSession,
+        });
+      }
+
+      userId = await UtilController.convertToMongoose(userId);
+      const result = await Project.aggregate([
+        { $match: { assignedWorkers: userId, active: true } },
+        { $project: { assignedWorkers: 0, assignedSupervisor: 0 } },
+      ]);
+
+      return UtilController.sendSuccess(req, res, next, {
+        message: "succesfully fetched projects",
+        responseCode: returnCode.validSession,
+        result,
       });
+    } catch (error) {
+      return UtilController.sendError(req, res, next, error);
     }
-
-    userId = await UtilController.convertToMongoose(userId);
-    const result = await Project.aggregate([
-      { $match: { assignedWorkers: userId, active: true } },
-      { $project: { assignedWorkers: 0, assignedSupervisor: 0 } },
-    ]);
-
-    return UtilController.sendSuccess(req, res, next, {
-      message: "succesfully fetched projects",
-      responseCode: returnCode.validSession,
-      result,
-    });
-
-    // console.log(projectData);
-    // let result = [];
-    for (const project of projectData) {
-      const floors = await Floor.aggregate([
-        {
-          $match: {
-            projectId: project._id,
-            active: true,
-          },
-        },
-      ]);
-      result.push(floors);
-    }
-
-    const floorResult = result.flat();
-    // console.log(floorResult);
-
-    let flatResult = [];
-
-    for (const floor of floorResult) {
-      const flat = await Flat.aggregate([
-        {
-          $match: {
-            projectId: floor.projectId,
-            floorId: floor._id,
-          },
-        },
-      ]);
-      flatResult.push(flat);
-    }
-
-    flatResult = flatResult.flat();
-
-    // console.log(flatResult);
-
-    // return UtilController.sendSuccess(req, res, next, {
-    //   message: "successfully fetched projects",
-    //   responseCode: returnCode.validSession,
-    //   projects: projectResult,
-    // });
   },
 
   projectAndTaskCounts: async (req, res, next) => {
@@ -87,7 +50,7 @@ module.exports = {
         Number(date) || Date.now()
       );
 
-      const userObjectId = new mongoose.Types.ObjectId(userId);
+      const userObjectId = await UtilController.convertToMongoose(userId);
 
       // Run both project and task aggregation in parallel
       const [projectResult, assignedTasksCount] = await Promise.all([
@@ -151,6 +114,118 @@ module.exports = {
         message: "Error fetching task counts",
         responsCode: returnCode.serverError,
       });
+    }
+  },
+
+  projectDetails: async (req, res, next) => {
+    try {
+      const { userId } = req.user;
+      if (!userId) {
+        return UtilController.sendError(req, res, next, {
+          message: "User not found",
+          responsCode: returnCode.invalidSession,
+        });
+      }
+
+      const { projectId } = req.body;
+
+      const projectObjectId = await UtilController.convertToMongoose(projectId);
+
+      // Fetch floor details for the given project
+      const floorResult = await Floor.aggregate([
+        {
+          $match: {
+            projectId: projectObjectId,
+            active: true,
+          },
+        },
+      ]);
+
+      let allFloorsDetails = [];
+
+      // Loop through each floor to gather its flats and rooms
+      for (const floor of floorResult) {
+        // Fetch flats and room details for each floor
+        const flatsWithRooms = await Flat.aggregate([
+          {
+            $match: {
+              projectId: projectObjectId,
+              floorId: floor._id,
+              active: true,
+            },
+          },
+          {
+            $lookup: {
+              from: "projectfloors",
+              localField: "floorId",
+              foreignField: "_id",
+              as: "floorDetails",
+            },
+          },
+          {
+            $unwind: {
+              path: "$floorDetails",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $unwind: {
+              path: "$rooms",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $lookup: {
+              from: "rooms",
+              localField: "rooms.roomId",
+              foreignField: "_id",
+              as: "roomDetails",
+            },
+          },
+          {
+            $unwind: {
+              path: "$roomDetails",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $addFields: {
+              "roomDetails.roomImages": "$rooms.roomImages",
+            },
+          },
+          {
+            $group: {
+              _id: "$flatNo",
+              flatId: { $first: "$_id" },
+              floorId: { $first: "$floorId" },
+              projectId: { $first: "$projectId" },
+              active: { $first: "$active" },
+              rooms: { $push: "$roomDetails" },
+            },
+          },
+        ]);
+
+        const floorDetails = {
+          floorNo: floor.floorNo,
+          flats: flatsWithRooms.map((flat) => ({
+            flatId: flat.flatId,
+            flatNo: flat._id,
+            rooms: flat.rooms,
+          })),
+        };
+
+        // Push this floor's details to the final array
+        allFloorsDetails.push(floorDetails);
+      }
+
+      // Return the results
+      return UtilController.sendSuccess(req, res, next, {
+        message: "Project details fetched successfully",
+        responseCode: returnCode.validSession,
+        details: allFloorsDetails,
+      });
+    } catch (error) {
+      return UtilController.sendError(req, res, next, error);
     }
   },
 };
