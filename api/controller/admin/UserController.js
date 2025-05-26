@@ -95,14 +95,23 @@ module.exports = {
       let createObj = req.body;
       const permissionId = createObj?.permission;
 
-      if (
-        UtilController.isEmpty(createObj?.fullName) ||
-        UtilController.isEmpty(createObj?.email) ||
-        UtilController.isEmpty(createObj?.mobileNumber)
-      ) {
+      if (UtilController.isEmpty(createObj?.fullName)) {
         return UtilController.sendSuccess(req, res, next, {
-          message:
-            "Name, email and mobile number is required for creating the account",
+          message: "Full name is required for creating the account.",
+          responseCode: returnCode.invalidInput,
+        });
+      }
+
+      if (UtilController.isEmpty(createObj?.email)) {
+        return UtilController.sendSuccess(req, res, next, {
+          message: "Email is required for creating the account.",
+          responseCode: returnCode.invalidInput,
+        });
+      }
+
+      if (UtilController.isEmpty(createObj?.mobileNumber)) {
+        return UtilController.sendSuccess(req, res, next, {
+          message: "Mobile number is required for creating the account.",
           responseCode: returnCode.invalidInput,
         });
       }
@@ -201,6 +210,7 @@ module.exports = {
     try {
       const { userId, ...updateObj } = req.body;
       console.log("userId: ", userId);
+
       if (UtilController.isEmpty(userId)) {
         return UtilController.sendSuccess(req, res, next, {
           message: "userId is required",
@@ -208,52 +218,69 @@ module.exports = {
         });
       }
 
-      const existingUser = await User.findOne({
-        $or: [
-          { email: updateObj.email },
-          { mobileNumber: updateObj.mobileNumber },
-        ],
-        userId: { $ne: userId },
-        active: true,
-      });
-      console.log("existingUser: ", existingUser);
-
-      if (existingUser) {
-        return UtilController.sendSuccess(req, res, next, {
-          message: "email or mobile number already exists",
-          responseCode: returnCode.duplicate,
+      if (!UtilController.isEmpty(updateObj?.email)) {
+        const emailExists = await User.findOne({
+          email: updateObj.email,
+          userId: { $ne: userId },
+          active: true,
         });
-      } else {
-        if (!UtilController.isEmpty(updateObj?.password)) {
-          const password = updateObj.password;
-          const encryptedPassword = CryptoJS.AES.encrypt(
-            password,
-            process.env.passwordSecretKey
-          ).toString();
-          updateObj["password"] = encryptedPassword;
-        }
-        const result = await User.findOneAndUpdate(
-          { userId: userId },
-          { $set: updateObj },
-          { new: true }
-        );
-        if (UtilController.isEmpty(result)) {
+
+        if (emailExists) {
           return UtilController.sendSuccess(req, res, next, {
-            message: "user not found",
-            responseCode: returnCode.invalidInput,
+            message: "Email already exists",
+            responseCode: returnCode.duplicate,
           });
         }
-        UtilController.sendSuccess(req, res, next, {
-          rows: result,
-          message: "success",
-          responseCode: returnCode.validSession,
+      }
+
+      if (!UtilController.isEmpty(updateObj?.mobileNumber)) {
+        const mobileExists = await User.findOne({
+          mobileNumber: updateObj.mobileNumber,
+          userId: { $ne: userId },
+          active: true,
+        });
+
+        if (mobileExists) {
+          return UtilController.sendSuccess(req, res, next, {
+            message: "Mobile number already exists",
+            responseCode: returnCode.duplicate,
+          });
+        }
+      }
+
+      if (!UtilController.isEmpty(updateObj?.password)) {
+        const password = updateObj.password;
+        const encryptedPassword = CryptoJS.AES.encrypt(
+          password,
+          process.env.passwordSecretKey
+        ).toString();
+        updateObj["password"] = encryptedPassword;
+      }
+
+      const result = await User.findOneAndUpdate(
+        { userId: userId },
+        { $set: updateObj },
+        { new: true }
+      );
+
+      if (UtilController.isEmpty(result)) {
+        return UtilController.sendSuccess(req, res, next, {
+          message: "User not found",
+          responseCode: returnCode.invalidInput,
         });
       }
+
+      UtilController.sendSuccess(req, res, next, {
+        rows: result,
+        message: "Success",
+        responseCode: returnCode.validSession,
+      });
     } catch (error) {
       console.log("error: ", error);
       UtilController.sendError(req, res, error);
     }
   },
+
   deleteUser: async (req, res, next) => {
     try {
       const { userId } = req.body;
