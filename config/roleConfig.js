@@ -183,7 +183,7 @@ module.exports = {
       ],
     },
     {
-      label: "Timesheet",
+      label: "Schedule Time",
       enable: true,
       buttons: [
         {
