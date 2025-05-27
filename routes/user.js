@@ -4,6 +4,7 @@ const UserController = require("../api/controller/user/UserController");
 const { userAuth } = require("../middleware/userAuth");
 const ProjectController = require("../api/controller/user/ProjectController");
 const AttendanceController = require("../api/controller/user/AttendanceController");
+const TaskController = require("../api/controller/user/TaskController");
 
 // authentication routes
 router.route("/accountLogin").post(UserController.login);
@@ -33,5 +34,9 @@ router.route("/checkOut").get(userAuth, AttendanceController.checkOut);
 router
   .route("/checkIns/list")
   .get(userAuth, AttendanceController.queryAllCheckins);
+
+// Task routes
+
+router.route("/task/list").get(userAuth, TaskController.queryTasks);
 
 module.exports = router;
