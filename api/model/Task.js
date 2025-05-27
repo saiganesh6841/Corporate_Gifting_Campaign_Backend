@@ -21,7 +21,7 @@ const taskSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "ProjectFloors",
   },
-  faltNo: {
+  flatNo: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "ProjectFlats",
   },

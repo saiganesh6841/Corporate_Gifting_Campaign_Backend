@@ -28,6 +28,7 @@ const floorSchema = mongoose.Schema({
     {
       roomId: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
       roomImages: [imageSchema],
+      notes: String
     },
   ],
   active: {

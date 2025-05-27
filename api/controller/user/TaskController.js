@@ -1,3 +1,4 @@
+const { returnCode } = require("../../../config/responseCode");
 const UtilController = require("../../controller/services/UtilController");
 const Task = require("../../model/Task");
 
@@ -13,8 +14,12 @@ module.exports = {
       }
 
       const userObjectId = await UtilController.convertToMongoose(userId);
-
       const { status } = req.query;
+
+      let matchFilter = {
+        workerId: userObjectId,
+        active: true,
+      };
 
       if (!status) {
         const currentDate = await UtilController.convertToEpoch(new Date());
@@ -22,38 +27,61 @@ module.exports = {
         const { startOfDay, endOfDay } =
           await UtilController.getStartAndEndOfDay(currentDate);
 
-
-        const result = await Task.aggregate([
-          {
-            $match: {
-              workerId: userObjectId,
-              createdAt: { $gte: startOfDay, $lte: endOfDay },
-              active: true,
-            },
-          },
-          {
-            $lookup: {
-              from: "projects",
-              localField: "projectId",
-              foreignField: "_id",
-              as: "projectDetails",
-            },
-          },
-          {
-            $unwind: {
-              path: "$projectDetails",
-              preserveNullAndEmptyArrays: true,
-            },
-          },
-
-          {
-            $project:{
-
-            }
-          }
-        ]);
-        console.log(result);
+        matchFilter.createdAt = { $gte: startOfDay, $lte: endOfDay };
+      } else {
+        matchFilter.taskStatus = status;
       }
+
+      const result = await Task.aggregate([
+        { $match: matchFilter },
+        {
+          $lookup: {
+            from: "projects",
+            localField: "projectId",
+            foreignField: "_id",
+            as: "projectDetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$projectDetails",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $group: {
+            _id: "$projectId",
+            projectDetails: { $first: "$projectDetails" },
+            taskCount: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            projectDetails: {
+              $mergeObjects: [
+                {
+                  _id: "$projectDetails._id",
+                  projectName: "$projectDetails.projectName",
+                  location: "$projectDetails.location",
+                  startDate: "$projectDetails.startDate",
+                  endDate: "$projectDetails.endDate",
+                },
+                { taskCount: "$taskCount" },
+              ],
+            },
+          },
+        },
+        {
+          $sort: { createdAt: -1 },
+        },
+      ]);
+
+      return UtilController.sendSuccess(req, res, next, {
+        message: "Tasks list fetched successfully",
+        responseCode: returnCode.validSession,
+        result,
+      });
     } catch (error) {
       return UtilController.sendError(req, res, next, error);
     }

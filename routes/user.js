@@ -5,6 +5,7 @@ const { userAuth } = require("../middleware/userAuth");
 const ProjectController = require("../api/controller/user/ProjectController");
 const AttendanceController = require("../api/controller/user/AttendanceController");
 const TaskController = require("../api/controller/user/TaskController");
+const RoomController = require("../api/controller/user/RoomController");
 
 // authentication routes
 router.route("/accountLogin").post(UserController.login);
@@ -38,5 +39,9 @@ router
 // Task routes
 
 router.route("/task/list").get(userAuth, TaskController.queryTasks);
+
+// room routes
+router.route("/room/tasks/list").post(userAuth, RoomController.taskDetails);
+router.route("/room/task/submit").post(userAuth, RoomController.submitTask);
 
 module.exports = router;
