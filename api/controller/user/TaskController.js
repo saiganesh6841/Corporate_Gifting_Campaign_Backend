@@ -66,6 +66,7 @@ module.exports = {
                   location: "$projectDetails.location",
                   startDate: "$projectDetails.startDate",
                   endDate: "$projectDetails.endDate",
+                  status: "$projectDetails.status",
                 },
                 { taskCount: "$taskCount" },
               ],

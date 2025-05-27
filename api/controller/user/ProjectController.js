@@ -106,8 +106,6 @@ module.exports = {
         },
       ]);
 
-      console.log(checkedInResult);
-
       const projectCounts = projectResult[0] || {
         assigned: 0,
         pending: 0,
@@ -136,158 +134,6 @@ module.exports = {
       });
     }
   },
-  //   try {
-  //     const { userId } = req.user;
-  //     if (!userId) {
-  //       return UtilController.sendError(req, res, next, {
-  //         message: "User not found",
-  //         responsCode: returnCode.invalidSession,
-  //       });
-  //     }
-
-  //     const { projectId } = req.body;
-
-  //     const projectObjectId = await UtilController.convertToMongoose(projectId);
-
-  //     const projectDetails = await Project.aggregate([
-  //       {
-  //         $match: {
-  //           _id: projectObjectId,
-  //           active: true,
-  //         },
-  //       },
-  //       {
-  //         $lookup: {
-  //           from: "users",
-  //           localField: "assignedSupervisor",
-  //           foreignField: "_id",
-  //           as: "assignedSupervisorDetails",
-  //         },
-  //       },
-  //       {
-  //         $unwind: {
-  //           path: "$assignedSupervisorDetails",
-  //           preserveNullAndEmptyArrays: true,
-  //         },
-  //       },
-  //       {
-  //         $project: {
-  //           projectName: 1,
-  //           location: 1,
-  //           startDate: 1,
-  //           // assignedSupervisor: 1,
-  //           assignedSupervisorDetails: {
-  //             _id: 1,
-  //             fullName: 1,
-  //             email: 1,
-  //             mobileNumber: 1,
-  //             // any other supervisor fields you want
-  //           },
-  //           // other fields of Project you want
-  //         },
-  //       },
-  //     ]);
-
-  //     // Fetch floor details for the given project
-  //     const floorResult = await Floor.aggregate([
-  //       {
-  //         $match: {
-  //           projectId: projectObjectId,
-  //           active: true,
-  //         },
-  //       },
-  //     ]);
-
-  //     let allFloorsDetails = [];
-
-  //     // Loop through each floor to gather its flats and rooms
-  //     for (const floor of floorResult) {
-  //       // Fetch flats and room details for each floor
-  //       const flatsWithRooms = await Flat.aggregate([
-  //         {
-  //           $match: {
-  //             projectId: projectObjectId,
-  //             floorId: floor._id,
-  //             active: true,
-  //           },
-  //         },
-  //         {
-  //           $lookup: {
-  //             from: "projectfloors",
-  //             localField: "floorId",
-  //             foreignField: "_id",
-  //             as: "floorDetails",
-  //           },
-  //         },
-  //         {
-  //           $unwind: {
-  //             path: "$floorDetails",
-  //             preserveNullAndEmptyArrays: true,
-  //           },
-  //         },
-  //         {
-  //           $unwind: {
-  //             path: "$rooms",
-  //             preserveNullAndEmptyArrays: true,
-  //           },
-  //         },
-  //         {
-  //           $lookup: {
-  //             from: "rooms",
-  //             localField: "rooms.roomId",
-  //             foreignField: "_id",
-  //             as: "roomDetails",
-  //           },
-  //         },
-  //         {
-  //           $unwind: {
-  //             path: "$roomDetails",
-  //             preserveNullAndEmptyArrays: true,
-  //           },
-  //         },
-  //         {
-  //           $addFields: {
-  //             "roomDetails.roomImages": "$rooms.roomImages",
-  //           },
-  //         },
-  //         {
-  //           $group: {
-  //             _id: "$flatNo",
-  //             flatId: { $first: "$_id" },
-  //             floorId: { $first: "$floorId" },
-  //             projectId: { $first: "$projectId" },
-  //             active: { $first: "$active" },
-  //             rooms: { $push: "$roomDetails" },
-  //           },
-  //         },
-  //       ]);
-
-  //       const floorDetails = {
-  //         floorNo: floor.floorNo,
-  //         flats: flatsWithRooms.map((flat) => ({
-  //           flatId: flat.flatId,
-  //           flatNo: flat._id,
-  //           rooms: flat.rooms,
-  //         })),
-  //       };
-
-  //       // Push this floor's details to the final array
-  //       allFloorsDetails.push(floorDetails);
-  //     }
-
-  //     // Return the results
-  //     return UtilController.sendSuccess(req, res, next, {
-  //       message: "Project details fetched successfully",
-  //       responseCode: returnCode.validSession,
-  //       projectDetails: {
-  //         ...projectDetails[0],
-  //         details: allFloorsDetails,
-  //       },
-  //     });
-  //   } catch (error) {
-  //     return UtilController.sendError(req, res, next, error);
-  //   }
-  // },
 
   projectDetails: async (req, res, next) => {
     try {
@@ -326,6 +172,8 @@ module.exports = {
             projectName: 1,
             location: 1,
             startDate: 1,
+            clientName: 1,
+            status: 1,
             assignedSupervisorDetails: {
               _id: 1,
               fullName: 1,
