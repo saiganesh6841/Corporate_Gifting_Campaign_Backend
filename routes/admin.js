@@ -10,7 +10,7 @@ const TaskController = require("../api/controller/admin/TaskController");
 const AwsController = require("../api/controller/admin/AwsController");
 
 // apis
-router.route("/upload/files").put(AwsController.uploadFiles);
+router.route("/upload/file").put(AwsController.uploadFiles);
 
 // authentication
 router.route("/accountLogin").post(AuthController.accountLogin);
