@@ -183,7 +183,7 @@ module.exports = {
       ],
     },
     {
-      label: "Timesheet",
+      label: "Schedule Time",
       enable: true,
       buttons: [
         {
@@ -209,7 +209,33 @@ module.exports = {
       ],
     },
     {
-      label: "ProgressTimeline",
+      label: "Room",
+      enable: true,
+      buttons: [
+        {
+          label: "view",
+          enable: true,
+        },
+        {
+          label: "add",
+          enable: true,
+        },
+        {
+          label: "edit",
+          enable: true,
+        },
+        {
+          label: "delete",
+          enable: true,
+        },
+        {
+          label: "query",
+          enable: true,
+        },
+      ],
+    },
+    {
+      label: "Progress Timeline",
       enable: true,
       buttons: [],
     },

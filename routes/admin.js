@@ -7,6 +7,10 @@ const RoleController = require("../api/controller/admin/RoleController");
 const RoomController = require("../api/controller/admin/RoomController");
 const { adminAuth } = require("../middleware/adminAuth");
 const TaskController = require("../api/controller/admin/TaskController");
+const AwsController = require("../api/controller/admin/AwsController");
+
+// apis
+router.route("/upload/file").put(AwsController.uploadFiles);
 
 // authentication
 router.route("/accountLogin").post(AuthController.accountLogin);
