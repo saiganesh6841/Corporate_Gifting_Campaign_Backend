@@ -260,6 +260,22 @@ module.exports = {
     return `${year}-${month}-${day}`;
   },
 
+  convertToEpoch: (date) => {
+    // Convert to Date object
+    const dateObj = new Date(date);
+
+    // Convert to milliseconds (epoch) in UTC
+    const utcEpoch = dateObj.getTime();
+
+    // Calculate IST offset (5 hours 30 minutes)
+    const istOffset = 5.5 * 60 * 60 * 1000; // milliseconds
+
+    // Add offset to get IST epoch
+    const istEpoch = utcEpoch + istOffset;
+
+    return Math.floor(istEpoch / 1000);
+  },
+
   tagGenerator: async (tagType) => {
     try {
       const tag = await Tag.findOneAndUpdate(
