@@ -149,7 +149,7 @@ module.exports = {
 
       // Look for existing entry
 
-      const updateExistingEntry = await Flat.updateOne(
+      const updateExistingEntry = await Flat.findOneAndUpdate(
         {
           _id: taskResult.flatNo,
           "rooms.roomId": taskResult.room,
@@ -172,7 +172,8 @@ module.exports = {
             { "entryElem.taskId": taskId },
           ],
         },
-        { new: true }
+        // { new: true },
+        { upsert: false }
       );
 
       //   if no existing entry is there we will push new entry

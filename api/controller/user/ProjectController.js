@@ -340,26 +340,22 @@ module.exports = {
         });
       }
 
-      const { flatId, roomId } = req.body;
+      const { flatId, roomId, isTask } = req.body;
 
       const flatObjectId = await UtilController.convertToMongoose(flatId);
       const roomObjectId = await UtilController.convertToMongoose(roomId);
 
-      const result = await Flat.aggregate([
+      const filterEntries =
+        isTask !== undefined && isTask !== "" && isTask !== null;
+
+      const pipeline = [
         {
           $match: {
             _id: flatObjectId,
             "rooms.roomId": roomObjectId,
           },
         },
-        {
-          $unwind: "$rooms",
-        },
-        {
-          $match: {
-            "rooms.roomId": roomObjectId,
-          },
-        },
+        { $unwind: "$rooms" },
         {
           $lookup: {
             from: "rooms",
@@ -368,27 +364,35 @@ module.exports = {
             as: "roomDetails",
           },
         },
-        {
-          $unwind: "$roomDetails",
-        },
+        { $unwind: "$roomDetails" },
         {
           $project: {
             flatNo: 1,
-            // floorId: 1,
-            // projectId: 1,
             active: 1,
-            // createdBy: 1,
-            // updatedAt: 1,
             createdAt: 1,
             __v: 1,
             roomName: "$roomDetails.roomName",
-            room: "$rooms",
+            room: {
+              _id: "$rooms._id",
+              roomId: "$rooms.roomId",
+              entries: filterEntries
+                ? {
+                    $filter: {
+                      input: "$rooms.entries",
+                      as: "entry",
+                      cond: { $eq: ["$$entry.isTask", isTask] },
+                    },
+                  }
+                : "$rooms.entries",
+            },
           },
         },
-      ]);
+      ];
+
+      const result = await Flat.aggregate(pipeline);
 
       return UtilController.sendSuccess(req, res, next, {
-        message: "successfully fetched the uploaded datas",
+        message: "Successfully fetched the uploaded data",
         result,
         responseCode: returnCode.validSession,
       });
