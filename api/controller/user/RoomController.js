@@ -58,59 +58,75 @@ module.exports = {
             preserveNullAndEmptyArrays: true,
           },
         },
-      ];
-
-      // If the **status is completed**, add the flatDetails lookup
-      if (status === "completed") {
-        pipeline.push(
-          {
-            $lookup: {
-              from: "projectflats",
-              localField: "flatNo",
-              foreignField: "_id",
-              as: "flatDetails",
-            },
+        {
+          $lookup: {
+            from: "projectflats",
+            localField: "flatNo",
+            foreignField: "_id",
+            as: "flatDetails",
           },
-          {
-            $unwind: {
-              path: "$flatDetails",
-              preserveNullAndEmptyArrays: true,
-            },
+        },
+        {
+          $unwind: {
+            path: "$flatDetails",
+            preserveNullAndEmptyArrays: true,
           },
-          {
-            $addFields: {
-              "flatDetails.rooms": {
-                $filter: {
-                  input: "$flatDetails.rooms",
-                  as: "room",
-                  cond: { $eq: ["$$room.roomId", roomObjectId] },
+        },
+        {
+          $addFields: {
+            "flatDetails.rooms": {
+              $map: {
+                input: {
+                  $filter: {
+                    input: "$flatDetails.rooms",
+                    as: "room",
+                    cond: { $eq: ["$$room.roomId", roomObjectId] },
+                  },
+                },
+                as: "room",
+                in: {
+                  roomId: "$$room.roomId",
+                  entries: {
+                    $filter: {
+                      input: "$$room.entries",
+                      as: "entry",
+                      cond: { $eq: ["$$entry.taskId", "$_id"] }, // Filter entries by taskId
+                    },
+                  },
                 },
               },
             },
-          }
-        );
-      }
-
-      // Final $project stage
-      const projectStage = {
-        $project: {
-          _id: 1,
-          taskName: 1,
-          taskDescription: 1,
-          status: 1,
-          createdAt: 1,
-          taskId: 1,
-          supervisorName: "$assignedSupervisor.fullName",
-          supervisorId: "$assignedSupervisor._id",
+          },
         },
-      };
+        {
+          $project: {
+            _id: 1,
+            taskName: 1,
+            taskDescription: 1,
+            status: 1,
+            createdAt: 1,
+            taskId: 1,
+            supervisorName: "$assignedSupervisor.fullName",
+            supervisorId: "$assignedSupervisor._id",
+            roomDetails: "$flatDetails.rooms",
+          },
+        },
+      ];
 
-      // Only add roomDetails if status is completed
-      if (status === "completed") {
-        projectStage.$project.roomDetails = "$flatDetails.rooms";
-      }
+      // If the **status is completed**, add the flatDetails lookup
+      //   if (status === "completed") {
+      //     pipeline.push();
+      //   }
 
-      pipeline.push(projectStage);
+      //   // Final $project stage
+      //   const projectStage = {};
+
+      //   // Only add roomDetails if status is completed
+      //   if (status === "completed") {
+      //     projectStage.$project.;
+      //   }
+
+      //   pipeline.push(projectStage);
 
       const result = await Task.aggregate(pipeline);
 
@@ -138,19 +154,61 @@ module.exports = {
 
       const taskResult = await Task.findById(taskId);
 
-      const updateRooms = await Flat.findByIdAndUpdate(
-        { _id: taskResult.flatNo },
+      if (!taskResult) {
+        return UtilController.sendError(req, res, next, {
+          message: "Task not found",
+          responseCode: returnCode.validationError,
+        });
+      }
+
+      // Look for existing entry
+
+      const updateExistingEntry = await Flat.updateOne(
+        {
+          _id: taskResult.flatNo,
+          "rooms.roomId": taskResult.room,
+          "rooms.entries.taskId": taskId,
+        },
         {
           $set: {
-            "rooms.$[elem].roomImages": imageUrls,
-            "rooms.$[elem].notes": notes,
+            "rooms.$[roomElem].entries.$[entryElem].roomImages": imageUrls,
+            "rooms.$[roomElem].entries.$[entryElem].notes": notes,
+            "rooms.$[roomElem].entries.$[entryElem].workerId": userId,
+            "rooms.$[roomElem].entries.$[entryElem].createdAt": new Date(),
           },
         },
         {
-          arrayFilters: [{ "elem.roomId": taskResult.room }],
-          new: true,
+          arrayFilters: [
+            { "roomElem.roomId": taskResult.room },
+            { "entryElem.taskId": taskId },
+          ],
         }
       );
+
+      //   if no existing entry is there we will push new entry
+
+      if (
+        updateExistingEntry.matchedCount === 0 ||
+        updateExistingEntry.modifiedCount === 0
+      ) {
+        await Flat.updateOne(
+          { _id: taskResult.flatNo, "rooms.roomId": taskResult.room },
+          {
+            $push: {
+              "rooms.$[roomElem].entries": {
+                roomImages: imageUrls,
+                notes: notes,
+                workerId: userId,
+                taskId: taskId,
+                createdAt: new Date(),
+              },
+            },
+          },
+          {
+            arrayFilters: [{ "roomElem.roomId": taskResult.room }],
+          }
+        );
+      }
 
       await Task.findByIdAndUpdate(taskId, {
         $set: {
