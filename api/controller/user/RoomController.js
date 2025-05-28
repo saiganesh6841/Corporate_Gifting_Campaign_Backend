@@ -107,26 +107,12 @@ module.exports = {
             createdAt: 1,
             taskId: 1,
             supervisorName: "$assignedSupervisor.fullName",
+            supervisorImage: "$assignedSupervisor.profileImage",
             supervisorId: "$assignedSupervisor._id",
             roomDetails: "$flatDetails.rooms",
           },
         },
       ];
-
-      // If the **status is completed**, add the flatDetails lookup
-      //   if (status === "completed") {
-      //     pipeline.push();
-      //   }
-
-      //   // Final $project stage
-      //   const projectStage = {};
-
-      //   // Only add roomDetails if status is completed
-      //   if (status === "completed") {
-      //     projectStage.$project.;
-      //   }
-
-      //   pipeline.push(projectStage);
 
       const result = await Task.aggregate(pipeline);
 
@@ -174,7 +160,10 @@ module.exports = {
             "rooms.$[roomElem].entries.$[entryElem].roomImages": imageUrls,
             "rooms.$[roomElem].entries.$[entryElem].notes": notes,
             "rooms.$[roomElem].entries.$[entryElem].workerId": userId,
-            "rooms.$[roomElem].entries.$[entryElem].createdAt": new Date(),
+            "rooms.$[roomElem].entries.$[entryElem].createdAt": Math.floor(
+              Date.now() / 1000
+            ),
+            "rooms.$[roomElem].entries.$[entryElem].isTask": true,
           },
         },
         {
@@ -182,7 +171,8 @@ module.exports = {
             { "roomElem.roomId": taskResult.room },
             { "entryElem.taskId": taskId },
           ],
-        }
+        },
+        { new: true }
       );
 
       //   if no existing entry is there we will push new entry
@@ -200,7 +190,7 @@ module.exports = {
                 notes: notes,
                 workerId: userId,
                 taskId: taskId,
-                createdAt: new Date(),
+                isTask: true,
               },
             },
           },

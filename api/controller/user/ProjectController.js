@@ -4,6 +4,7 @@ const UtilController = require("../services/UtilController");
 const Floor = require("../../model/ProjectFloors");
 const Flat = require("../../model/ProjectFlats");
 const Task = require("../../model/Task");
+const Tag = require("../../model/Tag");
 const { returnCode } = require("../../../config/responseCode");
 const mongoose = require("mongoose");
 const Attendance = require("../../model/Attendance");
@@ -270,6 +271,129 @@ module.exports = {
       });
     } catch (error) {
       return UtilController.sendError(req, res, next, error);
+    }
+  },
+
+  submitProjectUploads: async (req, res, next) => {
+    try {
+      const { userId } = req.user;
+      if (!userId) {
+        return UtilController.sendError(req, res, next, {
+          message: "User not found",
+          responseCode: returnCode.invalidSession,
+        });
+      }
+
+      const { flatId, roomId, imageUrls, notes } = req.body;
+
+      const flatObjectId = await UtilController.convertToMongoose(flatId);
+      const roomObjectId = await UtilController.convertToMongoose(roomId);
+
+      const tagResult = await Tag.findOneAndUpdate(
+        {
+          tagType: "upload",
+          active: true,
+        },
+        {
+          $inc: { sequenceNo: 1 },
+          updatedAt: Math.floor(Date.now() / 1000),
+        }
+      );
+
+      const uploadId =
+        tagResult.prefix + UtilController.pad(tagResult.sequenceNo, 5);
+
+      await Flat.updateOne(
+        { _id: flatObjectId, "rooms.roomId": roomObjectId },
+        {
+          $push: {
+            "rooms.$[roomElem].entries": {
+              roomImages: imageUrls,
+              notes: notes,
+              workerId: userId,
+              isTask: false,
+              uploadId,
+            },
+          },
+        },
+        {
+          arrayFilters: [{ "roomElem.roomId": roomObjectId }],
+        }
+      );
+
+      return UtilController.sendSuccess(req, res, next, {
+        message: "successfully submitted the project uploads",
+        responseCode: returnCode.validSession,
+      });
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
+
+  queryAllUploads: async (req, res, next) => {
+    try {
+      const { userId } = req.user;
+      if (!userId) {
+        return UtilController.sendError(req, res, next, {
+          message: "User not found",
+          responseCode: returnCode.invalidSession,
+        });
+      }
+
+      const { flatId, roomId } = req.body;
+
+      const flatObjectId = await UtilController.convertToMongoose(flatId);
+      const roomObjectId = await UtilController.convertToMongoose(roomId);
+
+      const result = await Flat.aggregate([
+        {
+          $match: {
+            _id: flatObjectId,
+            "rooms.roomId": roomObjectId,
+          },
+        },
+        {
+          $unwind: "$rooms",
+        },
+        {
+          $match: {
+            "rooms.roomId": roomObjectId,
+          },
+        },
+        {
+          $lookup: {
+            from: "rooms",
+            localField: "rooms.roomId",
+            foreignField: "_id",
+            as: "roomDetails",
+          },
+        },
+        {
+          $unwind: "$roomDetails",
+        },
+        {
+          $project: {
+            flatNo: 1,
+            // floorId: 1,
+            // projectId: 1,
+            active: 1,
+            // createdBy: 1,
+            // updatedAt: 1,
+            createdAt: 1,
+            __v: 1,
+            roomName: "$roomDetails.roomName",
+            room: "$rooms",
+          },
+        },
+      ]);
+
+      return UtilController.sendSuccess(req, res, next, {
+        message: "successfully fetched the uploaded datas",
+        result,
+        responseCode: returnCode.validSession,
+      });
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
     }
   },
 };

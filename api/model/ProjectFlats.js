@@ -33,6 +33,12 @@ const floorSchema = mongoose.Schema({
           notes: String,
           workerId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
           taskId: { type: mongoose.Schema.Types.ObjectId, ref: "Task" },
+          createdAt: {
+            type: Number,
+            default: () => Math.floor(Date.now() / 1000),
+          },
+          isTask: Boolean,
+          uploadId: { type: String },
         },
       ],
     },

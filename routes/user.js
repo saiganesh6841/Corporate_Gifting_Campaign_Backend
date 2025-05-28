@@ -25,6 +25,13 @@ router
 router
   .route("/project/details")
   .post(userAuth, ProjectController.projectDetails);
+router
+  .route("/project/submit")
+  .post(userAuth, ProjectController.submitProjectUploads);
+
+router
+  .route("/project/uploads/list")
+  .post(userAuth, ProjectController.queryAllUploads);
 
 // file upload routes
 router.route("/upload/files").put(UserController.uploadFiles);
