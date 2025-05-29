@@ -399,16 +399,30 @@ module.exports = {
           },
         },
         {
+          $lookup: {
+            from: "entries",
+            localField: "_id",
+            foreignField: "taskId",
+            as: "entryDetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$entryDetails",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
           $project: {
             taskStatus: 1,
             taskDescription: 1,
             taskId: 1,
-            createdAt:1,
+            createdAt: 1,
             workerName: "$workerDetails.fullName",
             workerImage: "$workerDetails.profileImage",
-            createdByName:"$createdDetails.fullName",
-            createdImage:"$createdDetails.profileImage",
-            createdUserType:"$createdDetails.userType",
+            createdByName: "$createdDetails.fullName",
+            createdImage: "$createdDetails.profileImage",
+            createdUserType: "$createdDetails.userType",
             projectName: "$projectDetails.projectName",
             projectId: "$projectDetails._id",
             floor: "$floorDetails.floorNo",
@@ -416,6 +430,7 @@ module.exports = {
             flat: "$flatDetails.flatNo",
             flatId: "$flatDetails._id",
             roomName: "$roomDetails.roomName",
+            images: "$entryDetails.roomImages",
           },
         },
       ];
