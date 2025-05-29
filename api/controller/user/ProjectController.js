@@ -7,41 +7,11 @@ const Task = require("../../model/Task");
 const Tag = require("../../model/Tag");
 const Entry = require("../../model/Entries");
 const { returnCode } = require("../../../config/responseCode");
-// const mongoose = require("mongoose");
 const Attendance = require("../../model/Attendance");
 const Chat = require("../../model/Chat");
 const Entries = require("../../model/Entries");
 
 module.exports = {
-  // queryAllPendingProjects: async (req, res, next) => {
-  //   try {
-  //     let { userId } = req.user;
-
-  //     if (!userId) {
-  //       return UtilController.sendError(req, res, next, {
-  //         message: "User not found",
-  //         responsCode: returnCode.invalidSession,
-  //       });
-  //     }
-
-  //     userId = await UtilController.convertToMongoose(userId);
-  //     const result = await Project.aggregate([
-  //       {
-  //         $match: { assignedWorkers: userId, active: true, status: "pending" },
-  //       },
-  //       { $project: { assignedWorkers: 0, assignedSupervisor: 0 } },
-  //     ]);
-
-  //     return UtilController.sendSuccess(req, res, next, {
-  //       message: "succesfully fetched projects",
-  //       responseCode: returnCode.validSession,
-  //       result,
-  //     });
-  //   } catch (error) {
-  //     return UtilController.sendError(req, res, next, error);
-  //   }
-  // },
-
   projectAndTaskCounts: async (req, res, next) => {
     try {
       let { userId } = req.user;

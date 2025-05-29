@@ -6,6 +6,7 @@ const UtilController = require("../services/UtilController");
 const mongoose = require("mongoose");
 const ProjectFlats = require("../../model/ProjectFlats");
 const ProjectFloors = require("../../model/ProjectFloors");
+const Chat = require("../../model/Chat");
 
 module.exports = {
   createProject: async (req, res, next) => {
@@ -139,6 +140,53 @@ module.exports = {
         message: "Something went wrong",
         responseCode: returnCode.internalServerError,
       });
+    }
+  },
+
+  addMessage: async (req, res, next) => {
+    try {
+      const { userId } = req.user;
+      if (!userId) {
+        return UtilController.sendError(req, res, next, {
+          message: "User not found",
+          responseCode: returnCode.invalidSession,
+        });
+      }
+
+      const { entryId, message } = req.body;
+      if (!message) {
+        return UtilController.sendError(req, res, next, {
+          message: "Message is required",
+          responseCode: returnCode.validationError,
+        });
+      }
+      const entryObjectId = await UtilController.convertToMongoose(entryId);
+
+      // update the chat based on the entryId
+      await Chat.findOneAndUpdate(
+        { entryId: entryObjectId },
+        {
+          $push: {
+            chats: {
+              message: message,
+              isAdminCreated: true,
+            },
+          },
+          $setOnInsert: {
+            createdBy: userId,
+            createdAt: Math.floor(Date.now() / 1000),
+          },
+        },
+        { new: true, upsert: true }
+      );
+
+      return UtilController.sendSuccess(req, res, next, {
+        message: "Succesfully added new message",
+        responseCode: returnCode.validSession,
+      });
+    } catch (error) {
+      console.log('error: ', error);
+      UtilController.sendError(req, res, next, error);
     }
   },
 };

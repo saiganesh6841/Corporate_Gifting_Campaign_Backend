@@ -31,6 +31,7 @@ router.route("/user/delete").post(adminAuth, UserController.deleteUser);
 router
   .route("/project/create")
   .post(adminAuth, ProjectController.createProject);
+router.route("/project/message").post(adminAuth, ProjectController.addMessage);
 
 // task routes
 router.route("/task/create").post(adminAuth, TaskController.createTask);
