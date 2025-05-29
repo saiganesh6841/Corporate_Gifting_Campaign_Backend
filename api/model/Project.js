@@ -26,11 +26,11 @@ const projectSchema = new mongoose.Schema({
     default: "",
   },
   startDate: {
-    type: String,
+    type: Number,
     default: "",
   },
-  endDate: {
-    type: String,
+  endDate: { 
+    type: Number,
     default: "",
   },
   clientPhoneNo: {

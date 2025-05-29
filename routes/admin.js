@@ -8,6 +8,7 @@ const RoomController = require("../api/controller/admin/RoomController");
 const { adminAuth } = require("../middleware/adminAuth");
 const TaskController = require("../api/controller/admin/TaskController");
 const AwsController = require("../api/controller/admin/AwsController");
+const DropdownContorller = require("../api/controller/admin/DropdownContorller");
 
 // apis
 router.route("/upload/file").put(AwsController.uploadFiles);
@@ -33,6 +34,10 @@ router
 
 // task routes
 router.route("/task/create").post(adminAuth, TaskController.createTask);
+router.route("/task/getAll").post(adminAuth, TaskController.getAllTask);
+router.route("/task/get").post(adminAuth, TaskController.getTaskById);
+router.route("/task/update").post(adminAuth, TaskController.updateTask);
+router.route("/task/delete").post(adminAuth, TaskController.deleteTask);
 
 //   room routes
 router.route("/room/create").post(adminAuth, RoomController.createRoom);
@@ -47,5 +52,16 @@ router.route("/role/list").post(adminAuth, RoleController.listRole);
 router.route("/role/get").post(adminAuth, RoleController.getRoleById);
 router.route("/role/update").post(adminAuth, RoleController.updateRole);
 router.route("/role/delete").post(adminAuth, RoleController.deleteRole);
+
+// dropdown routes
+router
+  .route("/dropdown/project")
+  .post(adminAuth, DropdownContorller.getProjects);
+router.route("/dropdown/floors").post(adminAuth, DropdownContorller.getFloors);
+router.route("/dropdown/flats").post(adminAuth, DropdownContorller.getFlats);
+router.route("/dropdown/rooms").post(adminAuth, DropdownContorller.getRooms);
+router
+  .route("/dropdown/workers")
+  .post(adminAuth, DropdownContorller.getWorkers);
 
 module.exports = router;
