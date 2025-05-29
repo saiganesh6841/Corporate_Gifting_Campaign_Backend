@@ -18,7 +18,11 @@ router.route("/logout").get(UserController.logout);
 router.route("/profile").get(userAuth, UserController.userProfile);
 
 // project routes
-router.route("/project/list").get(userAuth, ProjectController.queryProjects);
+router
+  .route("/project/list/pending")
+  .get(userAuth, ProjectController.queryAllPendingProjects);
+
+router.route("/project/list/all").get(userAuth, ProjectController.queryAllProjects);
 router
   .route("/project/count")
   .get(userAuth, ProjectController.projectAndTaskCounts);

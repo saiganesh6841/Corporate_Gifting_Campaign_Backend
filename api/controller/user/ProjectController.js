@@ -10,7 +10,7 @@ const mongoose = require("mongoose");
 const Attendance = require("../../model/Attendance");
 
 module.exports = {
-  queryProjects: async (req, res, next) => {
+  queryAllPendingProjects: async (req, res, next) => {
     try {
       let { userId } = req.user;
 
@@ -23,7 +23,9 @@ module.exports = {
 
       userId = await UtilController.convertToMongoose(userId);
       const result = await Project.aggregate([
-        { $match: { assignedWorkers: userId, active: true } },
+        {
+          $match: { assignedWorkers: userId, active: true, status: "pending" },
+        },
         { $project: { assignedWorkers: 0, assignedSupervisor: 0 } },
       ]);
 
@@ -395,6 +397,49 @@ module.exports = {
         message: "Successfully fetched the uploaded data",
         result,
         responseCode: returnCode.validSession,
+      });
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
+
+  queryAllProjects: async (req, res, next) => {
+    try {
+      let { userId } = req.user;
+
+      if (!userId) {
+        return UtilController.sendError(req, res, next, {
+          message: "User not found",
+          responsCode: returnCode.invalidSession,
+        });
+      }
+
+      userId = await UtilController.convertToMongoose(userId);
+
+      const { status } = req.query;
+
+      const matchFilter = {
+        assignedWorkers: userId,
+        active: true,
+      };
+
+      if (status !== "" && status !== undefined) {
+        matchFilter.status = status;
+      }
+
+      userId = await UtilController.convertToMongoose(userId);
+
+      const result = await Project.aggregate([
+        {
+          $match: matchFilter,
+        },
+        { $project: { assignedWorkers: 0, assignedSupervisor: 0 } },
+      ]);
+
+      return UtilController.sendSuccess(req, res, next, {
+        message: "succesfully fetched projects",
+        responseCode: returnCode.validSession,
+        result,
       });
     } catch (error) {
       UtilController.sendError(req, res, next, error);
