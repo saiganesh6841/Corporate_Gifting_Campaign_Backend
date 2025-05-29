@@ -9,6 +9,7 @@ const { adminAuth } = require("../middleware/adminAuth");
 const TaskController = require("../api/controller/admin/TaskController");
 const AwsController = require("../api/controller/admin/AwsController");
 const DropdownContorller = require("../api/controller/admin/DropdownContorller");
+const ScheduleTimeController = require("../api/controller/admin/ScheduleTimeController");
 
 // apis
 router.route("/upload/file").put(AwsController.uploadFiles);
@@ -41,7 +42,6 @@ router.route("/task/view").post(adminAuth, TaskController.taskView);
 router.route("/task/update").post(adminAuth, TaskController.updateTask);
 router.route("/task/delete").post(adminAuth, TaskController.deleteTask);
 
-
 //   room routes
 router.route("/room/create").post(adminAuth, RoomController.createRoom);
 router.route("/room/update").post(adminAuth, RoomController.updateRoom);
@@ -55,6 +55,19 @@ router.route("/role/list").post(adminAuth, RoleController.listRole);
 router.route("/role/get").post(adminAuth, RoleController.getRoleById);
 router.route("/role/update").post(adminAuth, RoleController.updateRole);
 router.route("/role/delete").post(adminAuth, RoleController.deleteRole);
+
+// schedule timing routes
+router
+  .route("/schedule/create")
+  .post(adminAuth, ScheduleTimeController.createTiming);
+router.route("/schedule/list").post(adminAuth, ScheduleTimeController.listTiming);
+router.route("/schedule/get").post(adminAuth, ScheduleTimeController.getTimingById);
+router
+  .route("/schedule/update")
+  .post(adminAuth, ScheduleTimeController.updateTiming);
+router
+  .route("/schedule/delete")
+  .post(adminAuth, ScheduleTimeController.deleteTiming);
 
 // dropdown routes
 router
