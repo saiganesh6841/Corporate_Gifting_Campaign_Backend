@@ -61,4 +61,136 @@ module.exports = {
       });
     }
   },
+  getAllTask: async (req, res, next) => {
+    try {
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
+  getTaskById: async (req, res, next) => {
+    try {
+      const recordId = req.body.recordId;
+      const pipeLine = [
+        {
+          $match: {
+            _id: UtilController.convertToMongoose(recordId),
+            active: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "projects",
+            localField: "projectId",
+            foreignField: "_id",
+            as: "projectDetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$projectDetails",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "projectfloors",
+            localField: "floorNo",
+            foreignField: "_id",
+            as: "floorDetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$floorDetails",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "projectflats",
+            localField: "flatNo",
+            foreignField: "_id",
+            as: "flatDetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$flatDetails",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "rooms",
+            localField: "room",
+            foreignField: "_id",
+            as: "roomDetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$roomDetails",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "workerId",
+            foreignField: "_id",
+            as: "workerDetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$workerDetails",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            taskStatus: 1,
+            taskDescription: 1,
+            taskId: 1,
+            projectName: "$projectDetails.projectName",
+            projectId: "$projectDetails._id",
+            floor: "$floorDetails.floorNo",
+            floorId: "$floorDetails._id",
+            flat: "$flatDetails.flatNo",
+            flatId: "$flatDetails._id",
+            room: "$roomDetails.roomName",
+            worker: "$workerDetails.fullName",
+          },
+        },
+      ];
+      const task = await Task.aggregate(pipeLine);
+
+      if (!task) {
+        return UtilController.sendError(req, res, next, {
+          message: "task not found",
+          responseCode: returnCode.invalidSession,
+        });
+      }
+
+      return UtilController.sendSuccess(req, res, next, {
+        message: "Successfully fetched the task",
+        responseCode: returnCode.validSession,
+        task,
+      });
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
+  updateTask: async (req, res, next) => {
+    try {
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
+  deleteTask: async (req, res, next) => {
+    try {
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
 };
