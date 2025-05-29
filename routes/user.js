@@ -44,7 +44,7 @@ router
   .post(userAuth, ProjectController.singleUploadDetails);
 
 router
-  .route("/project/upload/message")
+  .route("/project/message")
   .post(userAuth, ProjectController.addMessage);
 
 // file upload routes

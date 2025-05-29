@@ -10,6 +10,7 @@ const { returnCode } = require("../../../config/responseCode");
 // const mongoose = require("mongoose");
 const Attendance = require("../../model/Attendance");
 const Chat = require("../../model/Chat");
+const Entries = require("../../model/Entries");
 
 module.exports = {
   // queryAllPendingProjects: async (req, res, next) => {
@@ -334,7 +335,7 @@ module.exports = {
       );
 
       // create a chat using the entry id
-      
+
       await Chat.findOneAndUpdate(
         { entryId: newEntry._id },
         {
@@ -480,6 +481,117 @@ module.exports = {
 
   singleUploadDetails: async (req, res, next) => {
     try {
+      const { userId } = req.user;
+      if (!userId) {
+        return UtilController.sendError(req, res, next, {
+          message: "User not found",
+          responseCode: returnCode.invalidSession,
+        });
+      }
+
+      const { entryId } = req.body;
+      const entryObjectId = await UtilController.convertToMongoose(entryId);
+
+      const [entry] = await Entries.aggregate([
+        {
+          $match: { _id: entryObjectId },
+        },
+        {
+          $project: {
+            _id: 1,
+            roomImages: 1,
+            uploadId: {
+              $cond: {
+                if: { $ne: ["$uploadId", null] },
+                then: "$uploadId",
+                else: "$$REMOVE",
+              },
+            },
+            taskId: {
+              $cond: {
+                if: { $ne: ["$taskId", null] },
+                then: "$taskId",
+                else: "$$REMOVE",
+              },
+            },
+          },
+        },
+      ]);
+
+      if (!entry) {
+        return UtilController.sendError(req, res, next, {
+          message: "Entry not found",
+          responseCode: returnCode.invalidData,
+        });
+      }
+
+      const result = {
+        roomImages: entry.roomImages,
+      };
+
+      //  If the entry has a taskId, fetch supervisor details
+      if (entry.taskId) {
+        const [supervisor] = await Task.aggregate([
+          { $match: { _id: entry.taskId } },
+          {
+            $lookup: {
+              from: "projects",
+              localField: "projectId",
+              foreignField: "_id",
+              as: "projectDetails",
+            },
+          },
+          {
+            $unwind: {
+              path: "$projectDetails",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $lookup: {
+              from: "users",
+              localField: "projectDetails.assignedSupervisor",
+              foreignField: "_id",
+              as: "assignedSupervisor",
+            },
+          },
+          {
+            $unwind: {
+              path: "$assignedSupervisor",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              taskDescription: 1,
+              taskStatus: 1,
+              taskId: 1,
+              createdAt: 1,
+              supervisorName: "$assignedSupervisor.fullName",
+              supervisorImage: "$assignedSupervisor.profileImage",
+              // supervisorId: "$assignedSupervisor._id",
+            },
+          },
+        ]);
+
+        if (supervisor) {
+          result.supervisorDetails = supervisor;
+        }
+      }
+
+      //  Fetch chats (if any)
+      const chat = await Chat.findOne({ entryId });
+      if (chat?.chats) {
+        result.chats = chat.chats;
+      }
+
+      //  Send the final response
+      return UtilController.sendSuccess(req, res, next, {
+        message: "Successfully fetched uploads and chats",
+        responseCode: returnCode.validSession,
+        result,
+      });
     } catch (error) {
       UtilController.sendError(req, res, next, error);
     }
@@ -487,6 +599,45 @@ module.exports = {
 
   addMessage: async (req, res, next) => {
     try {
+      const { userId } = req.user;
+      if (!userId) {
+        return UtilController.sendError(req, res, next, {
+          message: "User not found",
+          responseCode: returnCode.invalidSession,
+        });
+      }
+
+      const { entryId, message } = req.body;
+      if (!message) {
+        return UtilController.sendError(req, res, next, {
+          message: "Message is required",
+          responseCode: returnCode.validationError,
+        });
+      }
+      const entryObjectId = await UtilController.convertToMongoose(entryId);
+
+      // update the chat based on the entryId
+      await Chat.findOneAndUpdate(
+        { entryId: entryObjectId },
+        {
+          $push: {
+            chats: {
+              message: message,
+              isAdminCreated: false,
+            },
+          },
+          $setOnInsert: {
+            createdBy: userId,
+            createdAt: Math.floor(Date.now() / 1000),
+          },
+        },
+        { new: true, upsert: true }
+      );
+
+      return UtilController.sendSuccess(req, res, next, {
+        message: "Succesfully added new message",
+        responseCode: returnCode.validSession,
+      });
     } catch (error) {
       UtilController.sendError(req, res, next, error);
     }
