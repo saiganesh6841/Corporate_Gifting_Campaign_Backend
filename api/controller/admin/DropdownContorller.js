@@ -132,7 +132,7 @@ module.exports = {
   },
   getRooms: async (req, res, next) => {
     try {
-      const { projectId, floorId } = req.body;
+      const { projectId, floorId, flatId } = req.body;
       const pipeline = [
         {
           $match: {
@@ -156,6 +156,9 @@ module.exports = {
                           UtilController.convertToMongoose(floorId),
                         ],
                       },
+                      {
+                        $eq: ["$_id", UtilController.convertToMongoose(flatId)],
+                      },
                     ],
                   },
                 },
@@ -167,22 +170,70 @@ module.exports = {
         {
           $unwind: {
             path: "$flatDetails",
-            preserveNullAndEmptyArrays: true,
+            preserveNullAndEmptyArrays: false,
+          },
+        },
+        {
+          $unwind: {
+            path: "$flatDetails.rooms",
+            preserveNullAndEmptyArrays: false,
+          },
+        },
+        {
+          $lookup: {
+            from: "rooms",
+            let: { roomId: "$flatDetails.rooms.roomId" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ["$_id", { $toObjectId: "$$roomId" }],
+                  },
+                },
+              },
+              {
+                $project: {
+                  _id: 1,
+                  roomName: 1,
+                },
+              },
+            ],
+            as: "roomInfo",
+          },
+        },
+        {
+          $unwind: {
+            path: "$roomInfo",
+            preserveNullAndEmptyArrays: false,
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            result: {
+              $push: {
+                _id: "$roomInfo._id",
+                roomName: "$roomInfo.roomName",
+              },
+            },
           },
         },
         {
           $project: {
             _id: 0,
-            flat: "$flatDetails.flatNo",
-            _id: "$flatDetails._id",
+            result: 1,
           },
         },
       ];
 
       const result = await Project.aggregate(pipeline);
+
+      // Extract the result array from the grouped result
+      const finalResult = result.length > 0 ? result[0].result : [];
+
       UtilController.sendSuccess(req, res, next, {
         responseCode: returnCode.validSession,
-        result,
+        result: finalResult,
       });
     } catch (error) {
       console.log("error: ", error);

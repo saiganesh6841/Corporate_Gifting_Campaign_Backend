@@ -70,7 +70,7 @@ module.exports = {
       });
     }
 
-    const { recordId, roomName } = req.body;
+    const { recordId } = req.body;
 
     const isRoomExists = await Room.findById(recordId);
 
