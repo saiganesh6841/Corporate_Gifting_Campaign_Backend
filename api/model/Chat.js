@@ -1,52 +1,30 @@
-let mongoose = require('mongoose');
+const { ChangeStream } = require("mongodb");
+const mongoose = require("mongoose");
 
-let chatSchema = mongoose.Schema({
-  sessionId:{
-    type:String,
-    default:""
-  }, // for chat from(sender) and to(receiver)
-  userId: {
+const messageSchema = new mongoose.Schema({
+  entryId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    required: true,
   },
-  title:{
-    type:String,
-    default:""
-  },
-  chat:[
+  chats: [
     {
-      message:String,
-      messageType:{
-        type:String,
-        default:"text"
-      },// it will be like text,image,video, link(websitelink), file
-      userType:{
-        type:String,
-        default:"sender"
-      }, // it will be sender and receiver , will make left side receiver and right side sender
-      updatedAt: {
-        type: Number,
-        default: () => Math.floor(Date.now() / 1000),
+      message: {
+        type: String,
       },
-    }
+      isAdminCreated: Boolean,
+    },
   ],
-
-  // operatedBy: {
-  //   type: mongoose.Schema.Types.ObjectId,
-  //   ref: "User",
-  // },
-  updatedAt: {
-    type: Number,
-    default: () => Math.floor(Date.now() / 1000),
+  //   file: [{ _id: false, name: String, url: String }],
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
   },
   createdAt: {
     type: Number,
     default: () => Math.floor(Date.now() / 1000),
-  }
-}, {
-  // this block will use when do we need to specify collection name. collection name should be case sensitive
-  //otherwise model plural name consider as collection name
-  collection: 'chats'
+  },
 });
 
-module.exports = mongoose.model('Chat', chatSchema);
+messageSchema.index({ createdAt: -1 });
+
+module.exports = mongoose.model("Message", messageSchema);

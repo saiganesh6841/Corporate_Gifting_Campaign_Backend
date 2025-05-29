@@ -3,6 +3,8 @@ const Task = require("../../model/Task");
 const UtilController = require("../services/UtilController");
 const { returnCode } = require("../../../config/responseCode");
 const Flat = require("../../model/ProjectFlats");
+const Entry = require("../../model/Entries");
+const Chat = require("../../model/Chat");
 
 module.exports = {
   taskDetails: async (req, res, next) => {
@@ -11,7 +13,7 @@ module.exports = {
       if (!userId) {
         return UtilController.sendError(req, res, next, {
           message: "User not found",
-          responsCode: returnCode.invalidSession,
+          responseCode: returnCode.invalidSession,
         });
       }
 
@@ -20,6 +22,7 @@ module.exports = {
       const flatObjectId = await UtilController.convertToMongoose(flatId);
       const roomObjectId = await UtilController.convertToMongoose(roomId);
 
+      // 1️⃣ Match tasks for the given flat, room, and status
       const matchFilter = {
         flatNo: flatObjectId,
         room: roomObjectId,
@@ -60,42 +63,28 @@ module.exports = {
         },
         {
           $lookup: {
-            from: "projectflats",
-            localField: "flatNo",
-            foreignField: "_id",
-            as: "flatDetails",
+            from: "entries",
+            let: { flatId: "$flatNo", roomId: "$room", taskId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$flatId", "$$flatId"] },
+                      { $eq: ["$roomId", "$$roomId"] },
+                      { $eq: ["$taskId", "$$taskId"] },
+                    ],
+                  },
+                },
+              },
+            ],
+            as: "roomDetails",
           },
         },
         {
           $unwind: {
-            path: "$flatDetails",
+            path: "$roomDetails",
             preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $addFields: {
-            "flatDetails.rooms": {
-              $map: {
-                input: {
-                  $filter: {
-                    input: "$flatDetails.rooms",
-                    as: "room",
-                    cond: { $eq: ["$$room.roomId", roomObjectId] },
-                  },
-                },
-                as: "room",
-                in: {
-                  roomId: "$$room.roomId",
-                  entries: {
-                    $filter: {
-                      input: "$$room.entries",
-                      as: "entry",
-                      cond: { $eq: ["$$entry.taskId", "$_id"] }, // Filter entries by taskId
-                    },
-                  },
-                },
-              },
-            },
           },
         },
         {
@@ -103,23 +92,22 @@ module.exports = {
             _id: 1,
             taskName: 1,
             taskDescription: 1,
-            status: 1,
+            taskStatus: 1,
             createdAt: 1,
-            taskId: 1,
             supervisorName: "$assignedSupervisor.fullName",
             supervisorImage: "$assignedSupervisor.profileImage",
             supervisorId: "$assignedSupervisor._id",
-            roomDetails: "$flatDetails.rooms",
+            roomDetails: 1,
           },
         },
       ];
 
-      const result = await Task.aggregate(pipeline);
+      const tasks = await Task.aggregate(pipeline);
 
       return UtilController.sendSuccess(req, res, next, {
         message: "Tasks fetched successfully",
         responseCode: returnCode.validSession,
-        result,
+        result: tasks,
       });
     } catch (error) {
       return UtilController.sendError(req, res, next, error);
@@ -132,14 +120,14 @@ module.exports = {
       if (!userId) {
         return UtilController.sendError(req, res, next, {
           message: "User not found",
-          responsCode: returnCode.invalidSession,
+          responseCode: returnCode.invalidSession,
         });
       }
 
       const { taskId, imageUrls, notes } = req.body;
 
+      // Validate task
       const taskResult = await Task.findById(taskId);
-
       if (!taskResult) {
         return UtilController.sendError(req, res, next, {
           message: "Task not found",
@@ -147,60 +135,77 @@ module.exports = {
         });
       }
 
-      // Look for existing entry
-
-      const updateExistingEntry = await Flat.findOneAndUpdate(
-        {
-          _id: taskResult.flatNo,
-          "rooms.roomId": taskResult.room,
-          "rooms.entries.taskId": taskId,
-        },
-        {
-          $set: {
-            "rooms.$[roomElem].entries.$[entryElem].roomImages": imageUrls,
-            "rooms.$[roomElem].entries.$[entryElem].notes": notes,
-            "rooms.$[roomElem].entries.$[entryElem].workerId": userId,
-            "rooms.$[roomElem].entries.$[entryElem].createdAt": Math.floor(
-              Date.now() / 1000
-            ),
-            "rooms.$[roomElem].entries.$[entryElem].isTask": true,
-          },
-        },
-        {
-          arrayFilters: [
-            { "roomElem.roomId": taskResult.room },
-            { "entryElem.taskId": taskId },
-          ],
-        },
-        // { new: true },
-        { upsert: false }
+      const flatObjectId = await UtilController.convertToMongoose(
+        taskResult.flatNo
+      );
+      const roomObjectId = await UtilController.convertToMongoose(
+        taskResult.room
       );
 
-      //   if no existing entry is there we will push new entry
+      // Check if an entry already exists for this task
+      let existingEntry = await Entry.findOne({
+        flatId: taskResult.flatNo,
+        roomId: taskResult.room,
+        taskId: taskId,
+      });
 
-      if (
-        updateExistingEntry.matchedCount === 0 ||
-        updateExistingEntry.modifiedCount === 0
-      ) {
-        await Flat.updateOne(
-          { _id: taskResult.flatNo, "rooms.roomId": taskResult.room },
+      let newEntry;
+
+      if (existingEntry) {
+        // Update the existing entry
+        existingEntry.roomImages = imageUrls;
+        existingEntry.notes = notes;
+        existingEntry.workerId = userId;
+        existingEntry.createdAt = Math.floor(Date.now() / 1000);
+        existingEntry.isTask = true;
+
+        await existingEntry.save();
+      } else {
+        // Create a new entry
+        newEntry = new Entry({
+          flatId: taskResult.flatNo,
+          roomId: taskResult.room,
+          taskId: taskId,
+          roomImages: imageUrls,
+          notes: notes,
+          workerId: userId,
+          isTask: true,
+          createdAt: Math.floor(Date.now() / 1000),
+        });
+        await newEntry.save();
+        await Flat.findOneAndUpdate(
           {
-            $push: {
-              "rooms.$[roomElem].entries": {
-                roomImages: imageUrls,
-                notes: notes,
-                workerId: userId,
-                taskId: taskId,
-                isTask: true,
-              },
-            },
+            _id: flatObjectId,
+            "rooms.roomId": roomObjectId,
           },
           {
-            arrayFilters: [{ "roomElem.roomId": taskResult.room }],
-          }
+            $push: { "rooms.$.entries": newEntry._id },
+          },
+          { new: true }
         );
       }
 
+      //   update the chat with the entry id
+      let entryId = existingEntry ? existingEntry._id : newEntry._id;
+
+      await Chat.findOneAndUpdate(
+        { entryId: entryId },
+        {
+          $set: {
+            chats: {
+              message: notes,
+              isAdminCreated: false,
+            },
+          },
+          $setOnInsert: {
+            createdBy: userId,
+            createdAt: Math.floor(Date.now() / 1000),
+          },
+        },
+        { new: true, upsert: true }
+      );
+
+      // Update task status
       await Task.findByIdAndUpdate(taskId, {
         $set: {
           taskStatus: "completed",
@@ -208,7 +213,7 @@ module.exports = {
       });
 
       return UtilController.sendSuccess(req, res, next, {
-        message: "successfully submitted the task",
+        message: "Successfully submitted the task",
         responseCode: returnCode.validSession,
       });
     } catch (error) {

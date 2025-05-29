@@ -1,17 +1,6 @@
 const mongoose = require("mongoose");
-const imageSchema = new mongoose.Schema(
-  {
-    type: { type: String, default: "" },
-    name: { type: String, default: "" },
-    url: { type: String, required: true },
-  },
-  { _id: false }
-);
-const floorSchema = mongoose.Schema({
-  // flatId: {
-  //   type: String,
-  //   default: "",
-  // },
+
+const floorSchema = new mongoose.Schema({
   flatNo: {
     type: Number,
     default: 0,
@@ -27,20 +16,7 @@ const floorSchema = mongoose.Schema({
   rooms: [
     {
       roomId: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
-      entries: [
-        {
-          roomImages: [imageSchema],
-          notes: String,
-          workerId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-          taskId: { type: mongoose.Schema.Types.ObjectId, ref: "Task" },
-          createdAt: {
-            type: Number,
-            default: () => Math.floor(Date.now() / 1000),
-          },
-          isTask: Boolean,
-          uploadId: { type: String },
-        },
-      ],
+      entries: [{ type: mongoose.Schema.Types.ObjectId, ref: "Entry" }], // References to Entry model
     },
   ],
   active: {

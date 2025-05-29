@@ -18,11 +18,13 @@ router.route("/logout").get(UserController.logout);
 router.route("/profile").get(userAuth, UserController.userProfile);
 
 // project routes
-router
-  .route("/project/list/pending")
-  .get(userAuth, ProjectController.queryAllPendingProjects);
+// router
+//   .route("/project/list/pending")
+//   .get(userAuth, ProjectController.queryAllPendingProjects);
 
-router.route("/project/list/all").get(userAuth, ProjectController.queryAllProjects);
+router
+  .route("/project/list/all")
+  .get(userAuth, ProjectController.queryAllProjects);
 router
   .route("/project/count")
   .get(userAuth, ProjectController.projectAndTaskCounts);
@@ -36,6 +38,14 @@ router
 router
   .route("/project/uploads/list")
   .post(userAuth, ProjectController.queryAllUploads);
+
+router
+  .route("/project/uploads/details")
+  .post(userAuth, ProjectController.singleUploadDetails);
+
+router
+  .route("/project/upload/message")
+  .post(userAuth, ProjectController.addMessage);
 
 // file upload routes
 router.route("/upload/files").put(UserController.uploadFiles);
