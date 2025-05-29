@@ -195,6 +195,7 @@ module.exports = {
             chats: {
               message: notes,
               isAdminCreated: false,
+              userId: userId,
             },
           },
           $setOnInsert: {

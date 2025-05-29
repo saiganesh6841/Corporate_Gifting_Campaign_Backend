@@ -313,6 +313,7 @@ module.exports = {
             chats: {
               message: notes,
               isAdminCreated: false,
+              userId: userId,
             },
           },
           $setOnInsert: {
@@ -551,9 +552,50 @@ module.exports = {
       }
 
       //  Fetch chats (if any)
-      const chat = await Chat.findOne({ entryId });
-      if (chat?.chats) {
-        result.chats = chat.chats;
+      const chat = await Chat.aggregate([
+        {
+          $match: {
+            entryId: entryObjectId,
+          },
+        },
+        {
+          $unwind: "$chats",
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "chats.userId",
+            foreignField: "_id",
+            as: "userDetails",
+          },
+        },
+        {
+          $addFields: {
+            "chats.userName": { $arrayElemAt: ["$userDetails.fullName", 0] },
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            entryId: 1,
+            "chats._id": 1,
+            "chats.message": 1,
+            "chats.isAdminCreated": 1,
+            "chats.userName": 1,
+            "chats.createAt": 1,
+          },
+        },
+        {
+          $group: {
+            _id: "$_id",
+            entryId: { $first: "$entryId" },
+            chats: { $push: "$chats" },
+          },
+        },
+      ]);
+
+      if (chat[0]?.chats) {
+        result.chats = chat[0].chats;
       }
 
       //  Send the final response

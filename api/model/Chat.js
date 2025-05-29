@@ -12,6 +12,10 @@ const messageSchema = new mongoose.Schema({
         type: String,
       },
       isAdminCreated: Boolean,
+      userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
     },
   ],
   //   file: [{ _id: false, name: String, url: String }],

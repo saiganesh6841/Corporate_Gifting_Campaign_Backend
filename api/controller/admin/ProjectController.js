@@ -170,6 +170,7 @@ module.exports = {
             chats: {
               message: message,
               isAdminCreated: true,
+              userId: userId,
             },
           },
           $setOnInsert: {
@@ -185,7 +186,7 @@ module.exports = {
         responseCode: returnCode.validSession,
       });
     } catch (error) {
-      console.log('error: ', error);
+      console.log("error: ", error);
       UtilController.sendError(req, res, next, error);
     }
   },
