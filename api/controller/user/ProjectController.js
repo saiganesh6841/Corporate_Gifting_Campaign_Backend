@@ -405,6 +405,14 @@ module.exports = {
         { $match: matchStage },
         {
           $lookup: {
+            from: "tasks",
+            localField: "taskId",
+            foreignField: "_id",
+            as: "taskDetails",
+          },
+        },
+        {
+          $lookup: {
             from: "projectflats",
             localField: "flatId",
             foreignField: "_id",
@@ -427,6 +435,20 @@ module.exports = {
             roomImages: 1,
             notes: 1,
             workerId: 1,
+            taskId: {
+              $cond: {
+                if: {
+                  $and: [
+                    { $gt: [{ $size: "$taskDetails" }, 0] },
+                    {
+                      $ne: [{ $arrayElemAt: ["$taskDetails.taskId", 0] }, null],
+                    },
+                  ],
+                },
+                then: { $arrayElemAt: ["$taskDetails.taskId", 0] },
+                else: "$$REMOVE",
+              },
+            },
             uploadId: 1,
             isTask: 1,
             createdAt: 1,
