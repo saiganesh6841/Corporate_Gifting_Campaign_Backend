@@ -274,7 +274,9 @@ module.exports = {
             flat: "$flatDetails.flatNo",
             flatId: "$flatDetails._id",
             room: "$roomDetails.roomName",
+            roomId: "$roomDetails._id",
             worker: "$workerDetails.fullName",
+            workerId: "$workerDetails._id",
           },
         },
       ];
