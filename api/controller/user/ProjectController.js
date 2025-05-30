@@ -401,6 +401,88 @@ module.exports = {
         matchStage.isTask = isTask;
       }
 
+      // const pipeline = [
+      //   { $match: matchStage },
+      //   {
+      //     $lookup: {
+      //       from: "tasks",
+      //       localField: "taskId",
+      //       foreignField: "_id",
+      //       as: "taskDetails",
+      //     },
+      //   },
+      //   {
+      //     $lookup: {
+      //       from: "projectflats",
+      //       localField: "flatId",
+      //       foreignField: "_id",
+      //       as: "flatDetails",
+      //     },
+      //   },
+      //   { $unwind: "$flatDetails" },
+      //   {
+      //     $lookup: {
+      //       from: "messages",
+      //       localField: "flatDetails.rooms.entries",
+      //       foreignField: "_id",
+      //       as: "messsageDetails",
+      //     },
+      //   },
+      //   {
+      //     $addFields: {
+      //       roomChatCount: {
+      //         $sum: {
+      //           $map: {
+      //             input: "$messsageDetails",
+      //             as: "msg",
+      //             in: { $size: { $ifNull: ["$$msg.chats", []] } },
+      //           },
+      //         },
+      //       },
+      //     },
+      //   },
+      //   {
+      //     $lookup: {
+      //       from: "rooms",
+      //       localField: "roomId",
+      //       foreignField: "_id",
+      //       as: "roomDetails",
+      //     },
+      //   },
+      //   { $unwind: "$roomDetails" },
+
+      //   {
+      //     $project: {
+      //       _id: 1,
+      //       roomImages: 1,
+      //       rooms: 1,
+      //       notes: 1,
+      //       workerId: 1,
+      //       roomChatCount: 1,
+      //       taskId: {
+      //         $cond: {
+      //           if: {
+      //             $and: [
+      //               { $gt: [{ $size: "$taskDetails" }, 0] },
+      //               {
+      //                 $ne: [{ $arrayElemAt: ["$taskDetails.taskId", 0] }, null],
+      //               },
+      //             ],
+      //           },
+      //           then: { $arrayElemAt: ["$taskDetails.taskId", 0] },
+      //           else: "$$REMOVE",
+      //         },
+      //       },
+      //       uploadId: 1,
+      //       isTask: 1,
+      //       createdAt: 1,
+      //       flatNo: "$flatDetails.flatNo",
+      //       roomName: "$roomDetails.roomName",
+      //     },
+      //   },
+      //   { $sort: { createdAt: -1 } },
+      // ];
+
       const pipeline = [
         { $match: matchStage },
         {
@@ -420,6 +502,25 @@ module.exports = {
           },
         },
         { $unwind: "$flatDetails" },
+
+        { $unwind: "$flatDetails.rooms.entries" },
+        {
+          $lookup: {
+            from: "messages",
+            localField: "flatDetails.rooms.entries",
+            foreignField: "entryId",
+            as: "messsageDetails", // fixed spelling
+          },
+        },
+        {
+          $addFields: {
+            chatCount: {
+              $size: {
+                $ifNull: [{ $arrayElemAt: ["$messageDetails.chats", 0] }, []],
+              },
+            },
+          },
+        },
         {
           $lookup: {
             from: "rooms",
@@ -433,8 +534,10 @@ module.exports = {
           $project: {
             _id: 1,
             roomImages: 1,
+            rooms: 1,
             notes: 1,
             workerId: 1,
+            roomChatCount: 1, // added field
             taskId: {
               $cond: {
                 if: {
@@ -454,6 +557,7 @@ module.exports = {
             createdAt: 1,
             flatNo: "$flatDetails.flatNo",
             roomName: "$roomDetails.roomName",
+            // include other fields if needed!
           },
         },
         { $sort: { createdAt: -1 } },
@@ -651,13 +755,14 @@ module.exports = {
       const entryObjectId = await UtilController.convertToMongoose(entryId);
 
       // update the chat based on the entryId
-      await Chat.findOneAndUpdate(
+      const result = await Chat.findOneAndUpdate(
         { entryId: entryObjectId },
         {
           $push: {
             chats: {
               message: message,
               isAdminCreated: false,
+              userId: userId,
             },
           },
           $setOnInsert: {
@@ -668,11 +773,29 @@ module.exports = {
         { new: true, upsert: true }
       );
 
+      // get the latest chat
+      const newChat = result.chats.at(-1);
+
+      // Fetch user's full name only if needed
+      const user = await User.findById(newChat.userId)
+        .select("fullName")
+        .lean();
+
+      const output = {
+        message: newChat.message,
+        isAdminCreated: newChat.isAdminCreated,
+        createdAt: newChat.createdAt,
+        userName: user?.fullName || "Unknown",
+      };
+
       return UtilController.sendSuccess(req, res, next, {
         message: "Succesfully added new message",
         responseCode: returnCode.validSession,
+        result: output,
       });
     } catch (error) {
+      console.log(error);
+
       UtilController.sendError(req, res, next, error);
     }
   },

@@ -52,9 +52,25 @@ module.exports = {
           $group: {
             _id: "$projectId",
             projectDetails: { $first: "$projectDetails" },
-            taskCount: { $sum: 1 },
+            taskCount: {
+              $sum: {
+                $cond: [
+                  status
+                    ? { $eq: ["$taskStatus", status] }
+                    : {
+                        $and: [
+                          { $gte: ["$createdAt", startOfDay] },
+                          { $lte: ["$createdAt", endOfDay] },
+                        ],
+                      }, 
+                  1,
+                  0,
+                ],
+              },
+            },
           },
         },
+
         {
           $project: {
             _id: 0,
@@ -77,7 +93,7 @@ module.exports = {
           $sort: { createdAt: -1 },
         },
       ]);
-
+      
       return UtilController.sendSuccess(req, res, next, {
         message: "Tasks list fetched successfully",
         responseCode: returnCode.validSession,

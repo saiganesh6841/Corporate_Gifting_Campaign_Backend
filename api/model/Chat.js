@@ -16,6 +16,10 @@ const messageSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
       },
+      createdAt: {
+        type: Number,
+        default: () => Math.floor(Date.now() / 1000),
+      },
     },
   ],
   //   file: [{ _id: false, name: String, url: String }],
