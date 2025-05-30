@@ -21,16 +21,20 @@ module.exports = {
         active: true,
       };
 
+      const currentDate = await UtilController.convertToEpoch(new Date());
+
+      const { startOfDay, endOfDay } = await UtilController.getStartAndEndOfDay(
+        currentDate
+      );
+
       if (!status) {
-        const currentDate = await UtilController.convertToEpoch(new Date());
-
-        const { startOfDay, endOfDay } =
-          await UtilController.getStartAndEndOfDay(currentDate);
-
         matchFilter.createdAt = { $gte: startOfDay, $lte: endOfDay };
       } else {
         matchFilter.taskStatus = status;
       }
+
+      console.log(matchFilter);
+      
 
       const result = await Task.aggregate([
         { $match: matchFilter },
@@ -62,7 +66,7 @@ module.exports = {
                           { $gte: ["$createdAt", startOfDay] },
                           { $lte: ["$createdAt", endOfDay] },
                         ],
-                      }, 
+                      },
                   1,
                   0,
                 ],
@@ -93,13 +97,15 @@ module.exports = {
           $sort: { createdAt: -1 },
         },
       ]);
-      
+
       return UtilController.sendSuccess(req, res, next, {
         message: "Tasks list fetched successfully",
         responseCode: returnCode.validSession,
         result,
       });
     } catch (error) {
+      console.log(error);
+
       return UtilController.sendError(req, res, next, error);
     }
   },

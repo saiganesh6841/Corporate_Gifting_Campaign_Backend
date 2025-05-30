@@ -16,17 +16,20 @@ module.exports = {
           responseCode: returnCode.invalidSession,
         });
       }
+      
 
       const { flatId, roomId, status } = req.body;
 
       const flatObjectId = await UtilController.convertToMongoose(flatId);
       const roomObjectId = await UtilController.convertToMongoose(roomId);
+      const userObjectId = await UtilController.convertToMongoose(userId);
 
       // 1️⃣ Match tasks for the given flat, room, and status
       const matchFilter = {
         flatNo: flatObjectId,
         room: roomObjectId,
         taskStatus: status || "pending",
+        workerId: userObjectId,
       };
 
       const pipeline = [

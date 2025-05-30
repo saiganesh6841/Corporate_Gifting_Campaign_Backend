@@ -401,88 +401,6 @@ module.exports = {
         matchStage.isTask = isTask;
       }
 
-      // const pipeline = [
-      //   { $match: matchStage },
-      //   {
-      //     $lookup: {
-      //       from: "tasks",
-      //       localField: "taskId",
-      //       foreignField: "_id",
-      //       as: "taskDetails",
-      //     },
-      //   },
-      //   {
-      //     $lookup: {
-      //       from: "projectflats",
-      //       localField: "flatId",
-      //       foreignField: "_id",
-      //       as: "flatDetails",
-      //     },
-      //   },
-      //   { $unwind: "$flatDetails" },
-      //   {
-      //     $lookup: {
-      //       from: "messages",
-      //       localField: "flatDetails.rooms.entries",
-      //       foreignField: "_id",
-      //       as: "messsageDetails",
-      //     },
-      //   },
-      //   {
-      //     $addFields: {
-      //       roomChatCount: {
-      //         $sum: {
-      //           $map: {
-      //             input: "$messsageDetails",
-      //             as: "msg",
-      //             in: { $size: { $ifNull: ["$$msg.chats", []] } },
-      //           },
-      //         },
-      //       },
-      //     },
-      //   },
-      //   {
-      //     $lookup: {
-      //       from: "rooms",
-      //       localField: "roomId",
-      //       foreignField: "_id",
-      //       as: "roomDetails",
-      //     },
-      //   },
-      //   { $unwind: "$roomDetails" },
-
-      //   {
-      //     $project: {
-      //       _id: 1,
-      //       roomImages: 1,
-      //       rooms: 1,
-      //       notes: 1,
-      //       workerId: 1,
-      //       roomChatCount: 1,
-      //       taskId: {
-      //         $cond: {
-      //           if: {
-      //             $and: [
-      //               { $gt: [{ $size: "$taskDetails" }, 0] },
-      //               {
-      //                 $ne: [{ $arrayElemAt: ["$taskDetails.taskId", 0] }, null],
-      //               },
-      //             ],
-      //           },
-      //           then: { $arrayElemAt: ["$taskDetails.taskId", 0] },
-      //           else: "$$REMOVE",
-      //         },
-      //       },
-      //       uploadId: 1,
-      //       isTask: 1,
-      //       createdAt: 1,
-      //       flatNo: "$flatDetails.flatNo",
-      //       roomName: "$roomDetails.roomName",
-      //     },
-      //   },
-      //   { $sort: { createdAt: -1 } },
-      // ];
-
       const pipeline = [
         { $match: matchStage },
         {
@@ -502,21 +420,23 @@ module.exports = {
           },
         },
         { $unwind: "$flatDetails" },
-
-        { $unwind: "$flatDetails.rooms.entries" },
         {
           $lookup: {
             from: "messages",
             localField: "flatDetails.rooms.entries",
-            foreignField: "entryId",
-            as: "messsageDetails", // fixed spelling
+            foreignField: "_id",
+            as: "messsageDetails",
           },
         },
         {
           $addFields: {
-            chatCount: {
-              $size: {
-                $ifNull: [{ $arrayElemAt: ["$messageDetails.chats", 0] }, []],
+            roomChatCount: {
+              $sum: {
+                $map: {
+                  input: "$messsageDetails",
+                  as: "msg",
+                  in: { $size: { $ifNull: ["$$msg.chats", []] } },
+                },
               },
             },
           },
@@ -530,6 +450,7 @@ module.exports = {
           },
         },
         { $unwind: "$roomDetails" },
+
         {
           $project: {
             _id: 1,
@@ -537,7 +458,7 @@ module.exports = {
             rooms: 1,
             notes: 1,
             workerId: 1,
-            roomChatCount: 1, // added field
+            roomChatCount: 1,
             taskId: {
               $cond: {
                 if: {
@@ -557,13 +478,14 @@ module.exports = {
             createdAt: 1,
             flatNo: "$flatDetails.flatNo",
             roomName: "$roomDetails.roomName",
-            // include other fields if needed!
           },
         },
         { $sort: { createdAt: -1 } },
       ];
 
       const entries = await Entry.aggregate(pipeline);
+
+      // console.log("entries - ", entries);
 
       return UtilController.sendSuccess(req, res, next, {
         message: "Successfully fetched the uploaded data",
