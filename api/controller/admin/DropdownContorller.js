@@ -268,6 +268,7 @@ module.exports = {
           $project: {
             _id: 0,
             workerName: "$workerDetails.fullName",
+            workerId: "$workerDetails._id",
           },
         },
       ];
