@@ -65,6 +65,7 @@ module.exports = {
             workHours: "$totalDuration",
             checkIn: 1,
             checkOut: 1,
+            status: "",
           },
         },
         {

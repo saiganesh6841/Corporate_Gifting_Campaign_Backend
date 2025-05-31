@@ -9,7 +9,7 @@ const { adminAuth } = require("../middleware/adminAuth");
 const TaskController = require("../api/controller/admin/TaskController");
 const AwsController = require("../api/controller/admin/AwsController");
 const DropdownContorller = require("../api/controller/admin/DropdownContorller");
-const ScheduleTimeController = require("../api/controller/admin/ScheduleTimeController");
+// const ScheduleTimeController = require("../api/controller/admin/ScheduleTimeController");
 const AttendenceController = require("../api/controller/admin/AttendenceController");
 
 // apis
@@ -61,6 +61,7 @@ router.route("/role/delete").post(adminAuth, RoleController.deleteRole);
 router
   .route("/attendence/list")
   .post(adminAuth, AttendenceController.listAttendence);
+  
 
 // schedule timing routes
 // router
