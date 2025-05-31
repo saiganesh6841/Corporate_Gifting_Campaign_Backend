@@ -83,7 +83,7 @@ module.exports = {
       const result = await Attendance.aggregate(pipeline);
       let pageCount = await Attendance.countDocuments(queryObj);
       UtilController.sendSuccess(req, res, next, {
-        result,
+        rows: result,
         message: "Attendence listed",
         pages: Math.ceil(pageCount / pageSize),
         filterRecords: pageCount,
