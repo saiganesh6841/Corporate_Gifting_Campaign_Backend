@@ -50,6 +50,10 @@ module.exports = {
           label: "query",
           enable: true,
         },
+        {
+          label: "export",
+          enable: true,
+        },
       ],
     },
     {
@@ -74,6 +78,10 @@ module.exports = {
         },
         {
           label: "query",
+          enable: true,
+        },
+        {
+          label: "export",
           enable: true,
         },
       ],
@@ -102,6 +110,10 @@ module.exports = {
           label: "query",
           enable: true,
         },
+        {
+          label: "export",
+          enable: true,
+        },
       ],
     },
     {
@@ -128,6 +140,10 @@ module.exports = {
           label: "query",
           enable: true,
         },
+        {
+          label: "export",
+          enable: true,
+        },
       ],
     },
     {
@@ -152,6 +168,10 @@ module.exports = {
         },
         {
           label: "query",
+          enable: true,
+        },
+        {
+          label: "export",
           enable: true,
         },
       ],
@@ -206,6 +226,10 @@ module.exports = {
           label: "query",
           enable: true,
         },
+        {
+          label: "export",
+          enable: true,
+        },
       ],
     },
     {
@@ -232,6 +256,10 @@ module.exports = {
           label: "query",
           enable: true,
         },
+        {
+          label: "export",
+          enable: true,
+        },
       ],
     },
     {
@@ -248,6 +276,10 @@ module.exports = {
       label: "Security",
       enable: true,
       buttons: [],
+    },
+    {
+      label: "export",
+      enable: true,
     },
   ],
 };
