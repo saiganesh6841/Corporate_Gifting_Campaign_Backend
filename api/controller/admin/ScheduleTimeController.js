@@ -4,11 +4,20 @@ const Schedule = require("../../model/Schedule");
 const Tag = require("../../model/Tag");
 const UtilController = require("../services/UtilController");
 const mongoose = require("mongoose");
+const {
+  format,
+  isToday,
+  differenceInMinutes,
+  fromUnixTime,
+  startOfDay,
+  endOfDay,
+} = require("date-fns");
 
 module.exports = {
   createTiming: async (req, res, next) => {
     const session = await mongoose.startSession();
     session.startTransaction();
+
     try {
       const { userId } = req.user;
 
@@ -22,6 +31,16 @@ module.exports = {
       }
 
       const { projectId, checkIn, checkOut } = req.body;
+
+      // Validate inputs
+      if (!projectId || !checkIn || !checkOut) {
+        await session.abortTransaction();
+        session.endSession();
+        return UtilController.sendError(req, res, next, {
+          message: "Missing required fields: projectId, checkIn, or checkOut",
+          responsCode: returnCode.invalidSession,
+        });
+      }
 
       const project = await Project.findById(projectId).session(session);
 
@@ -49,11 +68,17 @@ module.exports = {
       const scheduleId =
         tagResult.prefix + UtilController.pad(tagResult.sequenceNo, 5);
 
+      const durationInSeconds = checkOut - checkIn;
+      const hours = Math.floor(durationInSeconds / 3600);
+      const minutes = Math.floor((durationInSeconds % 3600) / 60);
+      const totalHoursFormatted = `${hours}h ${minutes}m`;
+
       const createScheduleObj = {
         scheduleId,
         projectId: project._id,
         checkIn,
         checkOut,
+        totalHours: totalHoursFormatted,
         createdBy: userId,
       };
 

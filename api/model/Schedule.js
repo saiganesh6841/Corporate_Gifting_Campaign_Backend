@@ -11,11 +11,12 @@ const roomSchema = new mongoose.Schema({
   },
   checkIn: {
     type: Number,
-    default: () => Math.floor(Date.now() / 1000),
   },
   checkOut: {
     type: Number,
-    default: () => Math.floor(Date.now() / 1000),
+  },
+  totalHours: {
+    type: String,
   },
   createdAt: {
     type: Number,

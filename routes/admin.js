@@ -10,6 +10,7 @@ const TaskController = require("../api/controller/admin/TaskController");
 const AwsController = require("../api/controller/admin/AwsController");
 const DropdownContorller = require("../api/controller/admin/DropdownContorller");
 const ScheduleTimeController = require("../api/controller/admin/ScheduleTimeController");
+const AttendenceController = require("../api/controller/admin/AttendenceController");
 
 // apis
 router.route("/upload/file").put(AwsController.uploadFiles);
@@ -40,7 +41,7 @@ router.route("/task/getAll").post(adminAuth, TaskController.getAllTask);
 router.route("/task/get").post(adminAuth, TaskController.getTaskById);
 router.route("/task/view").post(adminAuth, TaskController.taskView);
 router.route("/task/update").post(adminAuth, TaskController.updateTask);
-router.route("/task/delete").post(adminAuth, TaskController.deleteTask); 
+router.route("/task/delete").post(adminAuth, TaskController.deleteTask);
 
 //   room routes
 router.route("/room/create").post(adminAuth, RoomController.createRoom);
@@ -56,18 +57,23 @@ router.route("/role/get").post(adminAuth, RoleController.getRoleById);
 router.route("/role/update").post(adminAuth, RoleController.updateRole);
 router.route("/role/delete").post(adminAuth, RoleController.deleteRole);
 
+// attendence
+router
+  .route("/attendence/list")
+  .post(adminAuth, AttendenceController.listAttendence);
+
 // schedule timing routes
-router
-  .route("/schedule/create")
-  .post(adminAuth, ScheduleTimeController.createTiming);
-router.route("/schedule/list").post(adminAuth, ScheduleTimeController.listTiming);
-router.route("/schedule/get").post(adminAuth, ScheduleTimeController.getTimingById);
-router
-  .route("/schedule/update")
-  .post(adminAuth, ScheduleTimeController.updateTiming);
-router
-  .route("/schedule/delete")
-  .post(adminAuth, ScheduleTimeController.deleteTiming);
+// router
+//   .route("/schedule/create")
+//   .post(adminAuth, ScheduleTimeController.createTiming);
+// router.route("/schedule/list").post(adminAuth, ScheduleTimeController.listTiming);
+// router.route("/schedule/get").post(adminAuth, ScheduleTimeController.getTimingById);
+// router
+//   .route("/schedule/update")
+//   .post(adminAuth, ScheduleTimeController.updateTiming);
+// router
+//   .route("/schedule/delete")
+//   .post(adminAuth, ScheduleTimeController.deleteTiming);
 
 // dropdown routes
 router
