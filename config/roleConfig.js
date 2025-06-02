@@ -57,7 +57,7 @@ module.exports = {
       ],
     },
     {
-      label: "Project",
+      label: "Projects",
       enable: true,
       buttons: [
         {
