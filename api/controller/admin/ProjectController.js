@@ -373,6 +373,7 @@ module.exports = {
           $project: {
             roomName: 1,
             roomLogo: 1,
+            color:1
           },
         },
       ];
