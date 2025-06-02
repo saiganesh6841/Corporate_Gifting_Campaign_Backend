@@ -7,6 +7,7 @@ const mongoose = require("mongoose");
 const ProjectFlats = require("../../model/ProjectFlats");
 const ProjectFloors = require("../../model/ProjectFloors");
 const Chat = require("../../model/Chat");
+const User = require("../../model/User");
 
 module.exports = {
   createProject: async (req, res, next) => {
@@ -187,6 +188,262 @@ module.exports = {
       });
     } catch (error) {
       console.log("error: ", error);
+      UtilController.sendError(req, res, next, error);
+    }
+  },
+  listProject: async (req, res, next) => {
+    try {
+      const { ...filters } = req.body;
+      let queryObj = {
+        active: filters.active ?? true,
+      };
+      if (filters.active === "All") {
+        delete queryObj.active;
+      }
+
+      let sortOrder = {};
+
+      sortOrder = {
+        createdAt: -1,
+      };
+
+      let page = 0;
+      let pageSize = 10;
+      if (
+        !UtilController.isEmpty(filters.page) &&
+        !UtilController.isEmpty(filters.pageSize)
+      ) {
+        page = Number(filters.page);
+        pageSize = Number(filters.pageSize);
+      }
+
+      let searchKey = filters.keyword ?? "";
+
+      if (!UtilController.isEmpty(filters.startDate)) {
+        queryObj["$and"] = [
+          { createdAt: { $gte: filters.startDate } },
+          {
+            createdAt: {
+              $lte: filters.endDate || Math.floor(new Date() / 1000),
+            },
+          },
+        ];
+      }
+
+      if (!UtilController.isEmpty(searchKey)) {
+        queryObj["$or"] = [
+          { projectId: { $regex: searchKey, $options: "i" } },
+          { projectName: { $regex: searchKey, $options: "i" } },
+          { clientName: { $regex: searchKey, $options: "i" } },
+          { location: { $regex: searchKey, $options: "i" } },
+          { status: { $regex: searchKey, $options: "i" } },
+        ];
+      }
+
+      const pipeline = [
+        {
+          $match: queryObj,
+        },
+        {
+          $project: {
+            projectId: 1,
+            projectName: 1,
+            clientName: 1,
+            location: 1,
+            startDate: 1,
+            endDate: 1,
+            status: 1,
+          },
+        },
+        { $sort: sortOrder },
+        { $skip: page * pageSize },
+        { $limit: pageSize },
+      ];
+
+      const result = await Project.aggregate(pipeline);
+      let pageCount = await Project.countDocuments(queryObj);
+
+      UtilController.sendSuccess(req, res, next, {
+        rows: result,
+        pages: Math.ceil(pageCount / pageSize),
+        filterRecords: pageCount,
+        message: "success",
+        responseCode: returnCode.validSession,
+      });
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
+  getById: async (req, res, next) => {
+    try {
+      const { recordId } = req.body;
+      if (!recordId) {
+        return UtilController.sendError(req, res, next, {
+          message: "task not found",
+          responseCode: returnCode.invalidSession,
+        });
+      }
+      const pipeLine = [
+        {
+          $match: {
+            _id: UtilController.convertToMongoose(recordId),
+            active: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "projectfloors",
+            let: { projectId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ["$projectId", "$$projectId"],
+                  },
+                },
+              },
+              {
+                $project: {
+                  _id: 1,
+                  floorNo: 1,
+                  floorId: 1,
+                },
+              },
+            ],
+            as: "floorDetails",
+          },
+        },
+        {
+          $lookup: {
+            from: "projectflats",
+            let: { projectId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ["$projectId", "$$projectId"],
+                  },
+                },
+              },
+              {
+                $project: {
+                  _id: 1,
+                  flatNo: 1,
+                  rooms: 1,
+                },
+              },
+            ],
+            as: "flatDetails",
+          },
+        },
+      ];
+      const project = await Project.aggregate(pipeLine);
+
+      if (!project) {
+        return UtilController.sendError(req, res, next, {
+          message: "task not found",
+          responseCode: returnCode.invalidSession,
+        });
+      }
+
+      return UtilController.sendSuccess(req, res, next, {
+        message: "Successfully fetched the task",
+        responseCode: returnCode.validSession,
+        project,
+      });
+    } catch (error) {
+      UtilController.sendError(req, res, next);
+    }
+  },
+  getRoomDropdown: async (req, res, next) => {
+    try {
+      const searchKey = req.body.keyword;
+
+      let queryObj = {
+        active: true,
+      };
+      if (!UtilController.isEmpty(searchKey)) {
+        queryObj["$or"] = [{ roomName: { $regex: searchKey, $options: "i" } }];
+      }
+      const pipeline = [
+        {
+          $match: queryObj,
+        },
+        {
+          $project: {
+            roomName: 1,
+          },
+        },
+      ];
+      const room = await Room.aggregate(pipeline);
+      UtilController.sendSuccess(req, res, next, {
+        message: "rooms listed successfully ",
+        responseCode: returnCode.validSession,
+        room,
+      });
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
+  getSupervisorDropdown: async (req, res, next) => {
+    try {
+      const searchKey = req.body.keyword;
+
+      let queryObj = {
+        active: true,
+        userType: "supervisor",
+      };
+      if (!UtilController.isEmpty(searchKey)) {
+        queryObj["$or"] = [{ fullName: { $regex: searchKey, $options: "i" } }];
+      }
+      const pipeline = [
+        {
+          $match: queryObj,
+        },
+        {
+          $project: {
+            fullName: 1,
+          },
+        },
+      ];
+      const supervisor = await User.aggregate(pipeline);
+      UtilController.sendSuccess(req, res, next, {
+        message: "supervisor listed successfully ",
+        responseCode: returnCode.validSession,
+        supervisor,
+      });
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
+  getWorkerDropdown: async (req, res, next) => {
+    try {
+      const searchKey = req.body.keyword;
+
+      let queryObj = {
+        active: true,
+        userType: "worker",
+      };
+      if (!UtilController.isEmpty(searchKey)) {
+        queryObj["$or"] = [{ fullName: { $regex: searchKey, $options: "i" } }];
+      }
+      const pipeline = [
+        {
+          $match: queryObj,
+        },
+        {
+          $project: {
+            fullName: 1,
+          },
+        },
+      ];
+      const worker = await User.aggregate(pipeline);
+      UtilController.sendSuccess(req, res, next, {
+        message: "worker listed successfully ",
+        responseCode: returnCode.validSession,
+        worker,
+      });
+    } catch (error) {
       UtilController.sendError(req, res, next, error);
     }
   },

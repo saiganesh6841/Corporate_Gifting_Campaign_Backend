@@ -33,6 +33,17 @@ router.route("/user/delete").post(adminAuth, UserController.deleteUser);
 router
   .route("/project/create")
   .post(adminAuth, ProjectController.createProject);
+router.route("/project/list").post(adminAuth, ProjectController.listProject);
+router.route("/project/get").post(adminAuth, ProjectController.getById);
+router
+  .route("/project/dropdown/room")
+  .post(adminAuth, ProjectController.getRoomDropdown);
+router
+  .route("/project/dropdown/supervisor")
+  .post(adminAuth, ProjectController.getSupervisorDropdown);
+router
+  .route("/project/dropdown/worker")
+  .post(adminAuth, ProjectController.getWorkerDropdown);
 router.route("/project/message").post(adminAuth, ProjectController.addMessage);
 
 // task routes
@@ -61,7 +72,6 @@ router.route("/role/delete").post(adminAuth, RoleController.deleteRole);
 router
   .route("/attendence/list")
   .post(adminAuth, AttendenceController.listAttendence);
-  
 
 // schedule timing routes
 // router
