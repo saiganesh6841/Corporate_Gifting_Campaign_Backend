@@ -251,6 +251,7 @@ module.exports = {
             clientName: 1,
             location: 1,
             startDate: 1,
+            createdAt: 1,
             endDate: 1,
             status: 1,
           },
@@ -373,7 +374,7 @@ module.exports = {
           $project: {
             roomName: 1,
             roomLogo: 1,
-            color:1
+            color: 1,
           },
         },
       ];
