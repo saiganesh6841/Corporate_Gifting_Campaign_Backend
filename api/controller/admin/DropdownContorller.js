@@ -195,6 +195,8 @@ module.exports = {
                 $project: {
                   _id: 1,
                   roomName: 1,
+                  roomLogo: 1,
+                  color: 1,
                 },
               },
             ],
@@ -214,6 +216,8 @@ module.exports = {
               $push: {
                 _id: "$roomInfo._id",
                 roomName: "$roomInfo.roomName",
+                roomLogo: "$roomInfo.roomLogo",
+                color: "$roomInfo.color",
               },
             },
           },
