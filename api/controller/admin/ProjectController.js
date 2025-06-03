@@ -204,7 +204,7 @@ module.exports = {
       let sortOrder = {};
 
       sortOrder = {
-        createdAt: -1,
+        updatedAt: -1,
       };
 
       let page = 0;
@@ -252,6 +252,7 @@ module.exports = {
             location: 1,
             startDate: 1,
             createdAt: 1,
+            updatedAt: 1,
             endDate: 1,
             status: 1,
           },
