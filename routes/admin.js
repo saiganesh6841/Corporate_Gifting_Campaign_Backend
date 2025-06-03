@@ -35,6 +35,7 @@ router
   .post(adminAuth, ProjectController.createProject);
 router.route("/project/list").post(adminAuth, ProjectController.listProject);
 router.route("/project/get").post(adminAuth, ProjectController.getById);
+router.route("/project/view").post(adminAuth, ProjectController.projectView);
 router
   .route("/project/dropdown/room")
   .post(adminAuth, ProjectController.getRoomDropdown);

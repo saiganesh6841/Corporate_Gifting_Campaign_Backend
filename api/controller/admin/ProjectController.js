@@ -42,6 +42,8 @@ module.exports = {
       );
       projectData["projectId"] =
         tagResult.prefix + UtilController.pad(tagResult.sequenceNo, 5);
+      projectData["isSupervisorAssigned"] = true;
+      projectData["isWorkerAssigned"] = true;
 
       const project = await Project.create(
         [
@@ -409,6 +411,140 @@ module.exports = {
     } catch (error) {
       console.error(error);
       return UtilController.sendError(req, res, next);
+    }
+  },
+  projectView: async (req, res, next) => {
+    try {
+      const { recordId } = req.body;
+      if (!recordId) {
+        return UtilController.sendError(req, res, next, {
+          message: "task not found",
+          responseCode: returnCode.invalidSession,
+        });
+      }
+
+      const pipeLine = [
+        {
+          $match: {
+            _id: UtilController.convertToMongoose(recordId),
+            active: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "projectfloors",
+            let: { projectId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ["$projectId", "$$projectId"],
+                  },
+                },
+              },
+              {
+                $project: {
+                  _id: 1,
+                  floorNo: 1,
+                  floorId: 1,
+                },
+              },
+            ],
+            as: "floorDetails",
+          },
+        },
+        {
+          $lookup: {
+            from: "projectflats",
+            let: { projectId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ["$projectId", "$$projectId"],
+                  },
+                },
+              },
+              {
+                $unwind: "$rooms",
+              },
+              {
+                $lookup: {
+                  from: "rooms",
+                  localField: "rooms.roomId",
+                  foreignField: "_id",
+                  as: "roomDetails",
+                },
+              },
+              {
+                $unwind: {
+                  path: "$roomDetails",
+                  preserveNullAndEmptyArrays: true,
+                },
+              },
+              {
+                $group: {
+                  _id: "$_id",
+                  flatNo: { $first: "$flatNo" },
+                  floorId: { $first: "$floorId" },
+                  rooms: {
+                    $push: {
+                      _id: "$rooms._id",
+                      roomDetails: "$roomDetails",
+                    },
+                  },
+                },
+              },
+              {
+                $project: {
+                  _id: 1,
+                  flatNo: 1,
+                  floorId: 1,
+                  rooms: 1,
+                },
+              },
+            ],
+            as: "flatDetails",
+          },
+        },
+      ];
+
+      const project = await Project.aggregate(pipeLine);
+
+      if (!project || project.length === 0) {
+        return UtilController.sendError(req, res, next, {
+          message: "task not found",
+          responseCode: returnCode.invalidSession,
+        });
+      }
+
+      const formattedProject = project[0];
+
+      formattedProject.floorDetails = formattedProject.floorDetails.map(
+        (floor) => {
+          const roomDetails = formattedProject.flatDetails
+            .filter((flat) => flat.floorId.toString() === floor._id.toString())
+            .map((flat) => ({
+              flatNo: flat.flatNo,
+              rooms: flat.rooms,
+            }));
+
+          return {
+            ...floor,
+            roomDetails,
+          };
+        }
+      );
+
+      delete formattedProject.flatDetails;
+
+      return UtilController.sendSuccess(req, res, next, {
+        message: "Successfully fetched the task",
+        responseCode: returnCode.validSession,
+        project: [formattedProject],
+      });
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
     }
   },
   getRoomDropdown: async (req, res, next) => {
