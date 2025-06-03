@@ -36,8 +36,15 @@ router
 router.route("/project/list").post(adminAuth, ProjectController.listProject);
 router.route("/project/get").post(adminAuth, ProjectController.getById);
 router.route("/project/view").post(adminAuth, ProjectController.projectView);
-router.route("/project/worker").post(adminAuth, ProjectController.projectWorker);
-router.route("/project/roomView").post(adminAuth, ProjectController.projectRoomView);
+router
+  .route("/project/worker")
+  .post(adminAuth, ProjectController.projectWorker);
+router
+  .route("/project/roomView")
+  .post(adminAuth, ProjectController.projectRoomView);
+router.route("/project/message").post(adminAuth, ProjectController.addMessage);
+
+// project dropdowns
 router
   .route("/project/dropdown/room")
   .post(adminAuth, ProjectController.getRoomDropdown);
@@ -47,7 +54,12 @@ router
 router
   .route("/project/dropdown/worker")
   .post(adminAuth, ProjectController.getWorkerDropdown);
-router.route("/project/message").post(adminAuth, ProjectController.addMessage);
+router
+  .route("/project/dropdown/floor")
+  .post(adminAuth, ProjectController.getProjectFloors);
+router
+  .route("/project/dropdown/flat")
+  .post(adminAuth, ProjectController.getProjectFlat);
 
 // task routes
 router.route("/task/create").post(adminAuth, TaskController.createTask);

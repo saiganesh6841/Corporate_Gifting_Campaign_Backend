@@ -659,7 +659,7 @@ module.exports = {
             name: "$workerDetails.fullName",
             mobileNumber: "$workerDetails.mobileNumber",
             email: "$workerDetails.email",
-            createdAt: "$workerDetails.createdAt",
+            createdAt: 1,
           },
         },
         { $sort: sortOrder },
@@ -690,7 +690,6 @@ module.exports = {
   },
   projectRoomView: async (req, res, next) => {
     try {
-
     } catch (error) {
       UtilController.sendError(req, res, next, error);
     }
@@ -784,6 +783,61 @@ module.exports = {
         message: "worker listed successfully ",
         responseCode: returnCode.validSession,
         worker,
+      });
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
+  getProjectFloors: async (req, res, next) => {
+    try {
+      const { projectId } = req.body;
+      let queryObj = {
+        projectId: UtilController.convertToMongoose(projectId),
+      };
+
+      const pipeline = [
+        {
+          $match: queryObj,
+        },
+        {
+          $project: {
+            floorNo: 1,
+          },
+        },
+      ];
+      const floor = await ProjectFloors.aggregate(pipeline);
+      UtilController.sendSuccess(req, res, next, {
+        message: "floor listed successfully ",
+        responseCode: returnCode.validSession,
+        floor,
+      });
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
+  getProjectFlat: async (req, res, next) => {
+    try {
+      const { projectId, floorId } = req.body;
+      let queryObj = {
+        projectId: UtilController.convertToMongoose(projectId),
+        floorId: UtilController.convertToMongoose(floorId),
+      };
+
+      const pipeline = [
+        {
+          $match: queryObj,
+        },
+        {
+          $project: {
+            flatNo: 1,
+          },
+        },
+      ];
+      const flat = await ProjectFlats.aggregate(pipeline);
+      UtilController.sendSuccess(req, res, next, {
+        message: "flat listed successfully ",
+        responseCode: returnCode.validSession,
+        flat,
       });
     } catch (error) {
       UtilController.sendError(req, res, next, error);
