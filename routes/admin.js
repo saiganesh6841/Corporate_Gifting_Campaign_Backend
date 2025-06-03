@@ -33,6 +33,9 @@ router.route("/user/delete").post(adminAuth, UserController.deleteUser);
 router
   .route("/project/create")
   .post(adminAuth, ProjectController.createProject);
+router
+  .route("/project/update")
+  .post(adminAuth, ProjectController.updateProject);
 router.route("/project/list").post(adminAuth, ProjectController.listProject);
 router.route("/project/get").post(adminAuth, ProjectController.getById);
 router.route("/project/view").post(adminAuth, ProjectController.projectView);

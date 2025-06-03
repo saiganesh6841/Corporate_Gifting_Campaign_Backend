@@ -146,6 +146,12 @@ module.exports = {
       });
     }
   },
+  updateProject: async (req, res, next) => {
+    try {
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
 
   addMessage: async (req, res, next) => {
     try {
@@ -691,10 +697,11 @@ module.exports = {
   },
   projectRoomView: async (req, res, next) => {
     try {
-      const { flatId, roomId } = req.body;
+      const { flatId, roomId, date } = req.body;
       let queryObj = {
         roomId: UtilController.convertToMongoose(roomId),
         flatId: UtilController.convertToMongoose(flatId),
+        createdAt: date,
       };
       const pipeline = [
         {
