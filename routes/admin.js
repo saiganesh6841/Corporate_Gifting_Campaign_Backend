@@ -46,6 +46,9 @@ router
 router
   .route("/project/roomView")
   .post(adminAuth, ProjectController.projectRoomView);
+router
+  .route("/project/roomImageDetails")
+  .post(adminAuth, ProjectController.roomImageDetails);
 router.route("/project/message").post(adminAuth, ProjectController.addMessage);
 
 // project dropdowns

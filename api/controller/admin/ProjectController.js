@@ -852,6 +852,32 @@ module.exports = {
       UtilController.sendError(req, res, next, error);
     }
   },
+  roomImageDetails: async (req, res, next) => {
+    try {
+      const { entryId } = req.body;
+      let queryObj = {
+        _id: UtilController.convertToMongoose(entryId),
+      };
+      const pipeline = [
+        {
+          $match: queryObj,
+        },
+        {
+          $project: {
+            roomImages: 1,
+          },
+        },
+      ];
+      const entry = await Entries.aggregate(pipeline);
+      UtilController.sendSuccess(req, res, next, {
+        message: "roomImageDetails listed successfully ",
+        responseCode: returnCode.validSession,
+        entry,
+      });
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
   getSupervisorDropdown: async (req, res, next) => {
     try {
       const searchKey = req.body.keyword;
