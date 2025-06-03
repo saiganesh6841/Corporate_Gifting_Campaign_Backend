@@ -482,6 +482,7 @@ module.exports = {
                   preserveNullAndEmptyArrays: true,
                 },
               },
+
               {
                 $group: {
                   _id: "$_id",
@@ -507,6 +508,41 @@ module.exports = {
             as: "flatDetails",
           },
         },
+        {
+          $lookup: {
+            from: "users",
+            localField: "assignedSupervisor",
+            foreignField: "_id",
+            as: "supervisorDetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$supervisorDetails",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            projectId: 1,
+            projectName: 1,
+            active: 1,
+            location: 1,
+            clientName: 1,
+            companyName: 1,
+            startDate: 1,
+            endDate: 1,
+            clientPhoneNo: 1,
+            clientEmail: 1,
+            uploadImage: 1,
+            status: 1,
+            floorDetails: 1,
+            flatDetails: 1,
+            supervisorName: "$supervisorDetails.fullName",
+            supervisorMonile: "$supervisorDetails.mobileNumber",
+            supervisorImage: "$supervisorDetails.profileImage",
+          },
+        },
       ];
 
       const project = await Project.aggregate(pipeLine);
@@ -519,6 +555,7 @@ module.exports = {
       }
 
       const formattedProject = project[0];
+      console.log("formattedProject: ", formattedProject);
 
       formattedProject.floorDetails = formattedProject.floorDetails.map(
         (floor) => {
@@ -542,6 +579,110 @@ module.exports = {
         message: "Successfully fetched the task",
         responseCode: returnCode.validSession,
         project: [formattedProject],
+      });
+    } catch (error) {
+      console.log("error: ", error);
+      UtilController.sendError(req, res, next, error);
+    }
+  },
+  projectWorker: async (req, res, next) => {
+    try {
+      const { recordId, ...filters } = req.body;
+      let queryObj = {
+        active: filters.active ?? true,
+        _id: UtilController.convertToMongoose(recordId),
+      };
+      if (filters.active === "All") {
+        delete queryObj.active;
+      }
+
+      let sortOrder = {};
+
+      sortOrder = {
+        updatedAt: -1,
+      };
+
+      let page = 0;
+      let pageSize = 10;
+      if (
+        !UtilController.isEmpty(filters.page) &&
+        !UtilController.isEmpty(filters.pageSize)
+      ) {
+        page = Number(filters.page);
+        pageSize = Number(filters.pageSize);
+      }
+
+      let searchKey = filters.keyword ?? "";
+
+      if (!UtilController.isEmpty(filters.startDate)) {
+        queryObj["$and"] = [
+          { createdAt: { $gte: filters.startDate } },
+          {
+            createdAt: {
+              $lte: filters.endDate || Math.floor(new Date() / 1000),
+            },
+          },
+        ];
+      }
+
+      if (!UtilController.isEmpty(searchKey)) {
+        queryObj["$or"] = [
+          { projectId: { $regex: searchKey, $options: "i" } },
+          { projectName: { $regex: searchKey, $options: "i" } },
+          { clientName: { $regex: searchKey, $options: "i" } },
+          { location: { $regex: searchKey, $options: "i" } },
+          { status: { $regex: searchKey, $options: "i" } },
+        ];
+      }
+
+      const pipeline = [
+        {
+          $match: queryObj,
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "assignedWorkers",
+            foreignField: "_id",
+            as: "workerDetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$workerDetails",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            userId: "$workerDetails.userId",
+            name: "$workerDetails.fullName",
+            mobileNumber: "$workerDetails.mobileNumber",
+            email: "$workerDetails.email",
+            createdAt: "$workerDetails.createdAt",
+          },
+        },
+        { $sort: sortOrder },
+        { $skip: page * pageSize },
+        { $limit: pageSize },
+      ];
+
+      const result = await Project.aggregate(pipeline);
+      const countPipeline = [...pipeline];
+      const cleanPipeline = countPipeline.filter(
+        (stage) => !stage.$skip && !stage.$limit
+      );
+      cleanPipeline.push({ $count: "total" });
+
+      const countResult = await Project.aggregate(cleanPipeline);
+      const filterRecords = countResult[0]?.total || 0;
+
+      UtilController.sendSuccess(req, res, next, {
+        rows: result,
+        pages: Math.ceil(filterRecords / pageSize),
+        filterRecords: filterRecords,
+        message: "success",
+        responseCode: returnCode.validSession,
       });
     } catch (error) {
       UtilController.sendError(req, res, next, error);
