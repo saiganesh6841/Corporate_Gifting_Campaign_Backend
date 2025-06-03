@@ -539,7 +539,7 @@ module.exports = {
             floorDetails: 1,
             flatDetails: 1,
             supervisorName: "$supervisorDetails.fullName",
-            supervisorMonile: "$supervisorDetails.mobileNumber",
+            supervisorMobile: "$supervisorDetails.mobileNumber",
             supervisorImage: "$supervisorDetails.profileImage",
           },
         },
@@ -684,6 +684,13 @@ module.exports = {
         message: "success",
         responseCode: returnCode.validSession,
       });
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
+  projectRoomView: async (req, res, next) => {
+    try {
+
     } catch (error) {
       UtilController.sendError(req, res, next, error);
     }
