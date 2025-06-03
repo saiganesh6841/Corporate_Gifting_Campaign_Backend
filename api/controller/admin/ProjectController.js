@@ -725,8 +725,10 @@ module.exports = {
       let queryObj = {
         roomId: UtilController.convertToMongoose(roomId),
         flatId: UtilController.convertToMongoose(flatId),
-        createdAt: date,
       };
+      if (!UtilController.isEmpty(date)) {
+        queryObj["createdAt"] = date;
+      }
       const pipeline = [
         {
           $match: queryObj,
