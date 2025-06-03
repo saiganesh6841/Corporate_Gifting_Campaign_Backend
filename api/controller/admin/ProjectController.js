@@ -592,6 +592,30 @@ module.exports = {
       UtilController.sendError(req, res, next, error);
     }
   },
+  deleteProject: async (req, res, next) => {
+    try {
+      const { projectIds } = req.body;
+
+      if (!Array.isArray(projectIds) || projectIds.length === 0) {
+        return UtilController.sendSuccess(req, res, next, {
+          message: "projectIds array is required",
+          responseCode: returnCode.invalidInput,
+        });
+      }
+
+      await Project.updateMany(
+        { _id: { $in: projectIds } },
+        { $set: { active: false } }
+      );
+
+      return UtilController.sendSuccess(req, res, next, {
+        message: "Successfully deleted the project",
+        responseCode: returnCode.validSession,
+      });
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
   projectWorker: async (req, res, next) => {
     try {
       const { recordId, ...filters } = req.body;
