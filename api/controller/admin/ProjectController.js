@@ -285,6 +285,7 @@ module.exports = {
           responseCode: returnCode.invalidSession,
         });
       }
+
       const pipeLine = [
         {
           $match: {
@@ -328,9 +329,40 @@ module.exports = {
                 },
               },
               {
+                $unwind: "$rooms",
+              },
+              {
+                $lookup: {
+                  from: "rooms",
+                  localField: "rooms.roomId",
+                  foreignField: "_id",
+                  as: "roomDetails",
+                },
+              },
+              {
+                $unwind: {
+                  path: "$roomDetails",
+                  preserveNullAndEmptyArrays: true,
+                },
+              },
+              {
+                $group: {
+                  _id: "$_id",
+                  flatNo: { $first: "$flatNo" },
+                  floorId: { $first: "$floorId" },
+                  rooms: {
+                    $push: {
+                      _id: "$rooms._id",
+                      roomDetails: "$roomDetails",
+                    },
+                  },
+                },
+              },
+              {
                 $project: {
                   _id: 1,
                   flatNo: 1,
+                  floorId: 1,
                   rooms: 1,
                 },
               },
@@ -339,22 +371,44 @@ module.exports = {
           },
         },
       ];
+
       const project = await Project.aggregate(pipeLine);
 
-      if (!project) {
+      if (!project || project.length === 0) {
         return UtilController.sendError(req, res, next, {
           message: "task not found",
           responseCode: returnCode.invalidSession,
         });
       }
 
+      const formattedProject = project[0];
+
+      formattedProject.floorDetails = formattedProject.floorDetails.map(
+        (floor) => {
+          const roomDetails = formattedProject.flatDetails
+            .filter((flat) => flat.floorId.toString() === floor._id.toString())
+            .map((flat) => ({
+              flatNo: flat.flatNo,
+              rooms: flat.rooms,
+            }));
+
+          return {
+            ...floor,
+            roomDetails,
+          };
+        }
+      );
+
+      delete formattedProject.flatDetails;
+
       return UtilController.sendSuccess(req, res, next, {
         message: "Successfully fetched the task",
         responseCode: returnCode.validSession,
-        project,
+        project: [formattedProject],
       });
     } catch (error) {
-      UtilController.sendError(req, res, next);
+      console.error(error);
+      return UtilController.sendError(req, res, next);
     }
   },
   getRoomDropdown: async (req, res, next) => {
