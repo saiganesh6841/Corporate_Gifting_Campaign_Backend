@@ -814,7 +814,7 @@ module.exports = {
       ];
       const roomImages = await Entries.aggregate(pipeline);
       UtilController.sendSuccess(req, res, next, {
-        rows: roomImages,
+        result: roomImages,
         message: "success",
         responseCode: returnCode.validSession,
       });
