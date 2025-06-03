@@ -8,6 +8,7 @@ const ProjectFlats = require("../../model/ProjectFlats");
 const ProjectFloors = require("../../model/ProjectFloors");
 const Chat = require("../../model/Chat");
 const User = require("../../model/User");
+const Entries = require("../../model/Entries");
 
 module.exports = {
   createProject: async (req, res, next) => {
@@ -690,6 +691,100 @@ module.exports = {
   },
   projectRoomView: async (req, res, next) => {
     try {
+      const { flatId, roomId } = req.body;
+      let queryObj = {
+        roomId: UtilController.convertToMongoose(roomId),
+        flatId: UtilController.convertToMongoose(flatId),
+      };
+      const pipeline = [
+        {
+          $match: queryObj,
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "workerId",
+            foreignField: "_id",
+            as: "workerDetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$workerDetails",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "messages",
+            localField: "_id",
+            foreignField: "entryId",
+            as: "chatDetails",
+          },
+        },
+        {
+          $addFields: {
+            allChats: {
+              $reduce: {
+                input: "$chatDetails",
+                initialValue: [],
+                in: { $concatArrays: ["$$value", "$$this.chats"] },
+              },
+            },
+          },
+        },
+        {
+          $addFields: {
+            latestChat: {
+              $let: {
+                vars: {
+                  sortedChats: {
+                    $slice: [
+                      {
+                        $reverseArray: {
+                          $sortArray: {
+                            input: "$allChats",
+                            sortBy: { createdAt: 1 },
+                          },
+                        },
+                      },
+                      1,
+                    ],
+                  },
+                },
+                in: { $arrayElemAt: ["$$sortedChats", 0] },
+              },
+            },
+            chatCount: { $size: "$allChats" },
+          },
+        },
+        {
+          $project: {
+            roomImages: 1,
+            workerName: "$workerDetails.fullName",
+            workerImage: "$workerDetails.profileImage",
+            entryDate: "$createdAt",
+            latestChat: 1,
+            chatCount: 1,
+          },
+        },
+
+        // {
+        //   $project: {
+        //     roomImages: 1,
+        //     workerName: "$workerDetails.fullName",
+        //     workerImage: "$workerDetails.profileImage",
+        //     entryDate:"$createdAt",
+        //     chatDetails: 1,
+        //   },
+        // },
+      ];
+      const roomImages = await Entries.aggregate(pipeline);
+      UtilController.sendSuccess(req, res, next, {
+        rows: roomImages,
+        message: "success",
+        responseCode: returnCode.validSession,
+      });
     } catch (error) {
       UtilController.sendError(req, res, next, error);
     }
