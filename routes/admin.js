@@ -81,6 +81,8 @@ router.route("/task/get").post(adminAuth, TaskController.getTaskById);
 router.route("/task/view").post(adminAuth, TaskController.taskView);
 router.route("/task/update").post(adminAuth, TaskController.updateTask);
 router.route("/task/delete").post(adminAuth, TaskController.deleteTask);
+router.route("/task/message/list").post(adminAuth, TaskController.listTaskMessage);
+// router.route("/task/message/add").post(adminAuth, TaskController.addMessage);
 
 //   room routes
 router.route("/room/create").post(adminAuth, RoomController.createRoom);

@@ -1,4 +1,5 @@
 const { returnCode } = require("../../../config/responseCode");
+const Chat = require("../../model/Chat");
 const Tag = require("../../model/Tag");
 const Task = require("../../model/Task");
 const UtilController = require("../services/UtilController");
@@ -298,6 +299,7 @@ module.exports = {
       UtilController.sendError(req, res, next, error);
     }
   },
+
   taskView: async (req, res, next) => {
     try {
       const recordId = req.body.recordId;
@@ -433,6 +435,7 @@ module.exports = {
             flatId: "$flatDetails._id",
             roomName: "$roomDetails.roomName",
             images: "$entryDetails.roomImages",
+            entryId: "$entryDetails._id",
           },
         },
       ];
@@ -454,6 +457,7 @@ module.exports = {
       UtilController.sendError(req, res, next);
     }
   },
+
   updateTask: async (req, res, next) => {
     try {
       const { recordId } = req.body;
@@ -484,6 +488,7 @@ module.exports = {
       UtilController.sendError(req, res, next, error);
     }
   },
+
   deleteTask: async (req, res, next) => {
     try {
       const { taskIds } = req.body;
@@ -503,6 +508,58 @@ module.exports = {
       return UtilController.sendSuccess(req, res, next, {
         message: "Successfully deleted the task",
         responseCode: returnCode.validSession,
+      });
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
+  listTaskMessage: async (req, res, next) => {
+    try {
+      const { entryId } = req.body;
+      let queryObj = {
+        entryId: UtilController.convertToMongoose(entryId),
+      };
+      const pipeline = [
+        { $match: queryObj },
+        {
+          $unwind: "$chats",
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "chats.userId",
+            foreignField: "_id",
+            as: "userDetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$userDetails",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            message: "$chats.message",
+            isAdminCreated: "$chats.isAdminCreated",
+            createdAt: "$chats.createdAt",
+            userId: "$chats.userId",
+            fullName: "$userDetails.fullName",
+            profileImage: "$userDetails.profileImage",
+          },
+        },
+        {
+          $sort: {
+            createdAt: 1,
+          },
+        },
+      ];
+      const messages = await Chat.aggregate(pipeline);
+      UtilController.sendSuccess(req, res, next, {
+        responseCode: returnCode.validSession,
+        message: "success",
+        messages,
       });
     } catch (error) {
       UtilController.sendError(req, res, next, error);

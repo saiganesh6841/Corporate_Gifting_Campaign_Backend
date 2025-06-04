@@ -199,6 +199,7 @@ module.exports = {
       UtilController.sendError(req, res, next, error);
     }
   },
+
   messageList: async (req, res, next) => {
     try {
       const { entryId } = req.body;
@@ -251,6 +252,7 @@ module.exports = {
       UtilController.sendError(req, res, next, error);
     }
   },
+
   listProject: async (req, res, next) => {
     try {
       const { ...filters } = req.body;
