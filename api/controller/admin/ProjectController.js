@@ -874,7 +874,7 @@ module.exports = {
       UtilController.sendSuccess(req, res, next, {
         message: "roomImageDetails listed successfully ",
         responseCode: returnCode.validSession,
-        entry,
+        result: entry,
       });
     } catch (error) {
       UtilController.sendError(req, res, next, error);
