@@ -200,6 +200,12 @@ module.exports = {
       UtilController.sendError(req, res, next, error);
     }
   },
+  messageList: async (req, res, next) => {
+    try {
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
   listProject: async (req, res, next) => {
     try {
       const { ...filters } = req.body;
@@ -401,6 +407,8 @@ module.exports = {
             location: 1,
             clientName: 1,
             companyName: 1,
+            assignedWorkers: 1,
+            assignedSupervisor:1,
             startDate: 1,
             endDate: 1,
             clientPhoneNo: 1,
