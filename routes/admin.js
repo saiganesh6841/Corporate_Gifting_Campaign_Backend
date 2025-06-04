@@ -53,6 +53,9 @@ router
 router
   .route("/project/roomImageDetails")
   .post(adminAuth, ProjectController.roomImageDetails);
+router
+  .route("/project/deleteImage")
+  .post(adminAuth, ProjectController.deleteImage);
 router.route("/project/message").post(adminAuth, ProjectController.addMessage);
 router
   .route("/project/message/list")

@@ -977,6 +977,35 @@ module.exports = {
       UtilController.sendError(req, res, next, error);
     }
   },
+  deleteImage: async (req, res, next) => {
+    try {
+      const { entryId, imageUrl } = req.body;
+      if (!entryId || !imageUrl) {
+        return UtilController.sendError(req, res, next, {
+          message: "entryId and imageUrl are required",
+          responseCode: 400,
+        });
+      }
+      const result = await Entries.updateOne(
+        { _id: entryId },
+        { $pull: { roomImages: { url: imageUrl } } }
+      );
+
+      if (result.modifiedCount === 0) {
+        return UtilController.sendError(req, res, next, {
+          message: "Image not found or already deleted",
+          responseCode: 404,
+        });
+      }
+
+      UtilController.sendSuccess(req, res, next, {
+        message: "Image deleted successfully",
+        responseCode: returnCode.validSession,
+      });
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
   getSupervisorDropdown: async (req, res, next) => {
     try {
       const searchKey = req.body.keyword;
