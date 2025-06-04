@@ -379,6 +379,41 @@ module.exports = {
             as: "flatDetails",
           },
         },
+        {
+          $lookup: {
+            from: "users",
+            localField: "assignedSupervisor",
+            foreignField: "_id",
+            as: "supervisorDetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$supervisorDetails",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            projectId: 1,
+            projectName: 1,
+            active: 1,
+            location: 1,
+            clientName: 1,
+            companyName: 1,
+            startDate: 1,
+            endDate: 1,
+            clientPhoneNo: 1,
+            clientEmail: 1,
+            uploadImage: 1,
+            status: 1,
+            floorDetails: 1,
+            flatDetails: 1,
+            supervisorName: "$supervisorDetails.fullName",
+            supervisorMobile: "$supervisorDetails.mobileNumber",
+            supervisorImage: "$supervisorDetails.profileImage",
+          },
+        },
       ];
 
       const project = await Project.aggregate(pipeLine);
