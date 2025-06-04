@@ -5,11 +5,21 @@ const UtilController = require("../services/UtilController");
 module.exports = {
   getProgressTimeline: async (req, res, next) => {
     try {
-      const { roomId, flatId } = req.body;
+      const { roomId, flatId, startDate, endDate } = req.body;
       let queryObj = {
         roomId: UtilController.convertToMongoose(roomId),
         flatId: UtilController.convertToMongoose(flatId),
       };
+
+      if (
+        !UtilController.isEmpty(startDate) &&
+        !UtilController.isEmpty(endDate)
+      ) {
+        queryObj.createdAt = {
+          $gte: startDate,
+          $lte: endDate,
+        };
+      }
 
       const pipeline = [
         { $match: queryObj },
