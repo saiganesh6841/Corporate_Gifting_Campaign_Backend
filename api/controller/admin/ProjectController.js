@@ -408,7 +408,7 @@ module.exports = {
             clientName: 1,
             companyName: 1,
             assignedWorkers: 1,
-            assignedSupervisor:1,
+            assignedSupervisor: 1,
             startDate: 1,
             endDate: 1,
             clientPhoneNo: 1,
@@ -770,7 +770,14 @@ module.exports = {
         flatId: UtilController.convertToMongoose(flatId),
       };
       if (!UtilController.isEmpty(date)) {
-        queryObj["createdAt"] = date;
+        const inputDate = new Date(date * 1000); 
+        const startOfDay = new Date(inputDate.setUTCHours(0, 0, 0, 0));
+        const endOfDay = new Date(inputDate.setUTCHours(23, 59, 59, 999));
+
+        queryObj["createdAt"] = {
+          $gte: Math.floor(startOfDay.getTime() / 1000), 
+          $lte: Math.floor(endOfDay.getTime() / 1000),
+        };
       }
       const pipeline = [
         {
