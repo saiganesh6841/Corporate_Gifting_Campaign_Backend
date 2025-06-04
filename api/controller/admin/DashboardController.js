@@ -65,7 +65,7 @@ module.exports = {
   },
   dashboardGraph: async (req, res, next) => {
     try {
-      const { startDate, endDate, dateType, graphData } = req.query;
+      const { startDate, endDate, dateType, graphType } = req.query;
       console.log(req.query);
 
       const timezoneOffsetHours = 5.5;
@@ -123,7 +123,7 @@ module.exports = {
         };
       }
 
-      if (graphData === "project") {
+      if (graphType === "projects") {
         const projectPipeline = [
           {
             $match: {
@@ -152,6 +152,9 @@ module.exports = {
               cancelled: {
                 $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] },
               },
+              pending: {
+                $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] },
+              },
             },
           },
           {
@@ -161,13 +164,15 @@ module.exports = {
               completedProject: 1,
               inProgress: 1,
               cancelled: 1,
+              pending: 1,
             },
           },
           { $sort: { year: 1, month: 1, day: 1, week: 1 } },
         ];
         let projectGraph = await Project.aggregate(projectPipeline);
-        result.users = projectGraph;
-      } else if (graphData === "user") {
+
+        result.projects = projectGraph;
+      } else if (graphType === "users") {
         const userPipeline = [
           {
             $match: {
@@ -211,7 +216,7 @@ module.exports = {
         ];
         let userGraph = await User.aggregate(userPipeline);
         result.users = userGraph;
-      } else if (graphData === "task") {
+      } else if (graphType === "tasks") {
         const taskPipeline = [
           {
             $match: {
@@ -250,7 +255,7 @@ module.exports = {
           { $sort: { year: 1, month: 1, day: 1, week: 1 } },
         ];
         let taskGraph = await Task.aggregate(taskPipeline);
-        result.task = taskGraph;
+        result.tasks = taskGraph;
       }
 
       UtilController.sendSuccess(req, res, next, {
