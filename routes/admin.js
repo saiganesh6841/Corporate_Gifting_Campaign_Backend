@@ -12,6 +12,7 @@ const DropdownContorller = require("../api/controller/admin/DropdownContorller")
 // const ScheduleTimeController = require("../api/controller/admin/ScheduleTimeController");
 const AttendenceController = require("../api/controller/admin/AttendenceController");
 const DashboardController = require("../api/controller/admin/DashboardController");
+const ProgressTimeline = require("../api/controller/admin/ProgressTimeline");
 
 // apis
 router.route("/upload/file").put(AwsController.uploadFiles);
@@ -64,6 +65,11 @@ router
 router
   .route("/project/dropdown/worker")
   .post(adminAuth, ProjectController.getWorkerDropdown);
+
+// progressTime line
+router
+  .route("/progress/get")
+  .post(adminAuth, ProgressTimeline.getProgressTimeline);
 
 // task routes
 router.route("/task/create").post(adminAuth, TaskController.createTask);
