@@ -11,6 +11,7 @@ const AwsController = require("../api/controller/admin/AwsController");
 const DropdownContorller = require("../api/controller/admin/DropdownContorller");
 // const ScheduleTimeController = require("../api/controller/admin/ScheduleTimeController");
 const AttendenceController = require("../api/controller/admin/AttendenceController");
+const DashboardController = require("../api/controller/admin/DashboardController");
 
 // apis
 router.route("/upload/file").put(AwsController.uploadFiles);
@@ -114,5 +115,13 @@ router.route("/dropdown/rooms").post(adminAuth, DropdownContorller.getRooms);
 router
   .route("/dropdown/workers")
   .post(adminAuth, DropdownContorller.getWorkers);
+
+// dashboard routes
+router
+  .route("/dashboard/count")
+  .post(adminAuth, DashboardController.dashboardCount);
+router
+  .route("/dashboard/graph")
+  .get(adminAuth, DashboardController.dashboardGraph);
 
 module.exports = router;

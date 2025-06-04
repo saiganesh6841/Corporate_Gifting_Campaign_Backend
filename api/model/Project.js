@@ -62,7 +62,7 @@ const projectSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["pending", "completed", "inprogress"],
+    enum: ["pending", "completed", "inprogress","cancelled"],
     default: "pending",
   },
   createdBy: {
