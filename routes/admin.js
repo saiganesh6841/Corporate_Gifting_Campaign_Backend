@@ -12,6 +12,7 @@ const DropdownContorller = require("../api/controller/admin/DropdownContorller")
 // const ScheduleTimeController = require("../api/controller/admin/ScheduleTimeController");
 const AttendenceController = require("../api/controller/admin/AttendenceController");
 const DashboardController = require("../api/controller/admin/DashboardController");
+const ProgressTimeline = require("../api/controller/admin/ProgressTimeline");
 
 // apis
 router.route("/upload/file").put(AwsController.uploadFiles);
@@ -52,7 +53,13 @@ router
 router
   .route("/project/roomImageDetails")
   .post(adminAuth, ProjectController.roomImageDetails);
+router
+  .route("/project/deleteImage")
+  .post(adminAuth, ProjectController.deleteImage);
 router.route("/project/message").post(adminAuth, ProjectController.addMessage);
+router
+  .route("/project/message/list")
+  .post(adminAuth, ProjectController.messageList);
 
 // project dropdowns
 router
@@ -65,6 +72,11 @@ router
   .route("/project/dropdown/worker")
   .post(adminAuth, ProjectController.getWorkerDropdown);
 
+// progressTime line
+router
+  .route("/progress/get")
+  .post(adminAuth, ProgressTimeline.getProgressTimeline);
+
 // task routes
 router.route("/task/create").post(adminAuth, TaskController.createTask);
 router.route("/task/getAll").post(adminAuth, TaskController.getAllTask);
@@ -72,6 +84,8 @@ router.route("/task/get").post(adminAuth, TaskController.getTaskById);
 router.route("/task/view").post(adminAuth, TaskController.taskView);
 router.route("/task/update").post(adminAuth, TaskController.updateTask);
 router.route("/task/delete").post(adminAuth, TaskController.deleteTask);
+router.route("/task/message/list").post(adminAuth, TaskController.listTaskMessage);
+// router.route("/task/message/add").post(adminAuth, TaskController.addMessage);
 
 //   room routes
 router.route("/room/create").post(adminAuth, RoomController.createRoom);

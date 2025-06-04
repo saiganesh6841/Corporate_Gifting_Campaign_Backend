@@ -170,9 +170,8 @@ module.exports = {
           responseCode: returnCode.validationError,
         });
       }
-      const entryObjectId = await UtilController.convertToMongoose(entryId);
+      const entryObjectId = UtilController.convertToMongoose(entryId);
 
-      // update the chat based on the entryId
       await Chat.findOneAndUpdate(
         { entryId: entryObjectId },
         {
@@ -200,6 +199,60 @@ module.exports = {
       UtilController.sendError(req, res, next, error);
     }
   },
+
+  messageList: async (req, res, next) => {
+    try {
+      const { entryId } = req.body;
+      let queryObj = {
+        entryId: UtilController.convertToMongoose(entryId),
+      };
+      const pipeline = [
+        { $match: queryObj },
+        {
+          $unwind: "$chats",
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "chats.userId",
+            foreignField: "_id",
+            as: "userDetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$userDetails",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            message: "$chats.message",
+            isAdminCreated: "$chats.isAdminCreated",
+            createdAt: "$chats.createdAt",
+            userId: "$chats.userId",
+            fullName: "$userDetails.fullName",
+            profileImage: "$userDetails.profileImage",
+          },
+        },
+        {
+          $sort: {
+            createdAt: 1,
+          },
+        },
+      ];
+      const messages = await Chat.aggregate(pipeline);
+      UtilController.sendSuccess(req, res, next, {
+        responseCode: returnCode.validSession,
+        message: "success",
+        messages,
+      });
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
+
   listProject: async (req, res, next) => {
     try {
       const { ...filters } = req.body;
@@ -377,6 +430,43 @@ module.exports = {
               },
             ],
             as: "flatDetails",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "assignedSupervisor",
+            foreignField: "_id",
+            as: "supervisorDetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$supervisorDetails",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            projectId: 1,
+            projectName: 1,
+            active: 1,
+            location: 1,
+            clientName: 1,
+            companyName: 1,
+            assignedWorkers: 1,
+            assignedSupervisor: 1,
+            startDate: 1,
+            endDate: 1,
+            clientPhoneNo: 1,
+            clientEmail: 1,
+            uploadImage: 1,
+            status: 1,
+            floorDetails: 1,
+            flatDetails: 1,
+            supervisorName: "$supervisorDetails.fullName",
+            supervisorMobile: "$supervisorDetails.mobileNumber",
+            supervisorImage: "$supervisorDetails.profileImage",
           },
         },
       ];
@@ -727,7 +817,14 @@ module.exports = {
         flatId: UtilController.convertToMongoose(flatId),
       };
       if (!UtilController.isEmpty(date)) {
-        queryObj["createdAt"] = date;
+        const inputDate = new Date(date * 1000);
+        const startOfDay = new Date(inputDate.setUTCHours(0, 0, 0, 0));
+        const endOfDay = new Date(inputDate.setUTCHours(23, 59, 59, 999));
+
+        queryObj["createdAt"] = {
+          $gte: Math.floor(startOfDay.getTime() / 1000),
+          $lte: Math.floor(endOfDay.getTime() / 1000),
+        };
       }
       const pipeline = [
         {
@@ -875,6 +972,35 @@ module.exports = {
         message: "roomImageDetails listed successfully ",
         responseCode: returnCode.validSession,
         result: entry,
+      });
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
+  deleteImage: async (req, res, next) => {
+    try {
+      const { entryId, imageUrl } = req.body;
+      if (!entryId || !imageUrl) {
+        return UtilController.sendError(req, res, next, {
+          message: "entryId and imageUrl are required",
+          responseCode: 400,
+        });
+      }
+      const result = await Entries.updateOne(
+        { _id: entryId },
+        { $pull: { roomImages: { url: imageUrl } } }
+      );
+
+      if (result.modifiedCount === 0) {
+        return UtilController.sendError(req, res, next, {
+          message: "Image not found or already deleted",
+          responseCode: 404,
+        });
+      }
+
+      UtilController.sendSuccess(req, res, next, {
+        message: "Image deleted successfully",
+        responseCode: returnCode.validSession,
       });
     } catch (error) {
       UtilController.sendError(req, res, next, error);
