@@ -170,9 +170,8 @@ module.exports = {
           responseCode: returnCode.validationError,
         });
       }
-      const entryObjectId = await UtilController.convertToMongoose(entryId);
+      const entryObjectId = UtilController.convertToMongoose(entryId);
 
-      // update the chat based on the entryId
       await Chat.findOneAndUpdate(
         { entryId: entryObjectId },
         {
@@ -202,6 +201,52 @@ module.exports = {
   },
   messageList: async (req, res, next) => {
     try {
+      const { entryId } = req.body;
+      let queryObj = {
+        entryId: UtilController.convertToMongoose(entryId),
+      };
+      const pipeline = [
+        { $match: queryObj },
+        {
+          $unwind: "$chats",
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "chats.userId",
+            foreignField: "_id",
+            as: "userDetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$userDetails",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            message: "$chats.message",
+            isAdminCreated: "$chats.isAdminCreated",
+            createdAt: "$chats.createdAt",
+            userId: "$chats.userId",
+            fullName: "$userDetails.fullName",
+            profileImage: "$userDetails.profileImage",
+          },
+        },
+        {
+          $sort: {
+            createdAt: 1,
+          },
+        },
+      ];
+      const messages = await Chat.aggregate(pipeline);
+      UtilController.sendSuccess(req, res, next, {
+        responseCode: returnCode.validSession,
+        message: "success",
+        messages,
+      });
     } catch (error) {
       UtilController.sendError(req, res, next, error);
     }
@@ -770,12 +815,12 @@ module.exports = {
         flatId: UtilController.convertToMongoose(flatId),
       };
       if (!UtilController.isEmpty(date)) {
-        const inputDate = new Date(date * 1000); 
+        const inputDate = new Date(date * 1000);
         const startOfDay = new Date(inputDate.setUTCHours(0, 0, 0, 0));
         const endOfDay = new Date(inputDate.setUTCHours(23, 59, 59, 999));
 
         queryObj["createdAt"] = {
-          $gte: Math.floor(startOfDay.getTime() / 1000), 
+          $gte: Math.floor(startOfDay.getTime() / 1000),
           $lte: Math.floor(endOfDay.getTime() / 1000),
         };
       }
