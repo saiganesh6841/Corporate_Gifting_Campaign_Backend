@@ -158,115 +158,120 @@ module.exports = {
           responseCode: returnCode.invalidSession,
         });
       }
-      existingProject.projectName = projectName;
-      existingProject.clientName = clientName;
-      existingProject.location = location;
-      existingProject.companyName = companyName;
-      existingProject.startDate = startDate;
-      existingProject.endDate = endDate;
-      existingProject.clientPhoneNo = mobileNumber;
-      existingProject.clientEmail = email;
-      existingProject.assignedSupervisor = assignedSupervisor;
-      existingProject.assignedWorkers = assignedWorkers;
-      existingProject.uploadImage = uploadImage;
-      existingProject.status = status;
+      existingProject.projectName = updateObj.projectName;
+      existingProject.clientName = updateObj.clientName;
+      existingProject.location = updateObj.location;
+      existingProject.companyName = updateObj.companyName;
+      existingProject.startDate = updateObj.startDate;
+      existingProject.endDate = updateObj.endDate;
+      existingProject.clientPhoneNo = updateObj.mobileNumber;
+      existingProject.clientEmail = updateObj.email;
+      existingProject.assignedSupervisor = updateObj.assignedSupervisor;
+      existingProject.assignedWorkers = updateObj.assignedWorkers;
+      existingProject.uploadImage = updateObj.uploadImage;
+      existingProject.status = updateObj.status;
       existingProject.updatedAt = Math.floor(Date.now() / 1000);
 
       await existingProject.save();
 
-      const projectObjectId = existingProject._id;
-      const existingFloors = await ProjectFloors.find({
-        projectId: projectObjectId,
-      });
+      // const projectObjectId = existingProject._id;
+      // const existingFloors = await ProjectFloors.find({
+      //   projectId: projectObjectId,
+      // });
 
-      const incomingFloorIds = details
-        .filter((f) => f._id)
-        .map((f) => UtilController.convertToMongoose(f._id));
+      // const incomingFloorIds = updateObj.details
+      //   .filter((f) => f._id)
+      //   .map((f) => UtilController.convertToMongoose(f._id));
 
-      // Delete removed floors
-      const deletedFloors = existingFloors.filter(
-        (f) => !incomingFloorIds.includes(f._id)
-      );
+      // // Delete removed floors
+      // const deletedFloors = existingFloors.filter(
+      //   (f) => !incomingFloorIds.includes(f._id)
+      // );
 
-      for (const floor of deletedFloors) {
-        await ProjectFlats.deleteMany({ floorId: floor._id });
-        await ProjectFloors.findByIdAndDelete(floor._id);
-      }
+      // for (const floor of deletedFloors) {
+      //   await ProjectFlats.deleteMany({ floorId: floor._id });
+      //   await ProjectFloors.findByIdAndDelete(floor._id);
+      // }
 
-      // Add or update floors
-      for (const floorData of details) {
-        let floorDoc;
+      // // Add or update floors
+      // for (const floorData of updateObj.details) {
+      //   console.log("floorData: ", floorData);
+      //   let floorDoc;
 
-        if (floorData._id) {
-          // Update existing floor
-          floorDoc = await ProjectFloors.findById(floorData._id);
-          if (floorDoc) {
-            floorDoc.floorNo = floorData.floorNo;
-            floorDoc.updatedAt = Math.floor(Date.now() / 1000);
-            await floorDoc.save();
-          }
-        } else {
-          // Create new floor
-          floorDoc = new ProjectFloors({
-            floorId: floorData.floorId,
-            floorNo: floorData.floorNo,
-            projectId: projectObjectId,
-            createdBy: req.user.userId,
-          });
-          await floorDoc.save();
-        }
+      //   if (floorData._id) {
+      //     // Update existing floor
+      //     floorDoc = await ProjectFloors.findById(floorData._id);
+      //     console.log('floorDoc: ', floorDoc);
+      //     if (floorDoc) {
+      //       floorDoc.floorNo = floorData.floorNo;
+      //       floorDoc.updatedAt = Math.floor(Date.now() / 1000);
+      //       await floorDoc.save();
+      //     }
+      //   } else {
+      //     // Create new floor
+      //     floorDoc = new ProjectFloors({
+      //       floorId: floorData.floorId,
+      //       floorNo: floorData.floorNo,
+      //       projectId: projectObjectId,
+      //       createdBy: req.user.userId,
+      //     });
+      //     await floorDoc.save();
+      //   }
 
-        // Handle Flats under Floor
-        const existingFlats = await ProjectFlats.find({
-          floorId: floorDoc._id,
-          projectId: projectObjectId,
-        });
+      //   console.log(floorDoc, "floorDoc");
 
-        const incomingFlatNos = floorData.roomDetails.map((f) => f.flatNo);
+      //   // Handle Flats under Floor
+      //   const existingFlats = await ProjectFlats.find({
+      //     floorId: floorDoc._id,
+      //     projectId: projectObjectId,
+      //   });
 
-        // Delete removed flats
-        for (const flat of existingFlats) {
-          if (!incomingFlatNos.includes(flat.flatNo)) {
-            await ProjectFlats.findByIdAndDelete(flat._id);
-          }
-        }
+      //   const incomingFlatNos = floorData.roomDetails.map((f) => f.flatNo);
 
-        // Add or update flats & rooms
-        for (const flatData of floorData.roomDetails) {
-          const existingFlat = await ProjectFlats.findOne({
-            floorId: floorDoc._id,
-            flatNo: flatData.flatNo,
-            projectId: projectObjectId,
-          });
+      //   // Delete removed flats
+      //   for (const flat of existingFlats) {
+      //     if (!incomingFlatNos.includes(flat.flatNo)) {
+      //       await ProjectFlats.findByIdAndDelete(flat._id);
+      //     }
+      //   }
 
-          const roomIds = flatData.rooms.map((r) =>
-            typeof r === "string"
-              ? mongoose.Types.ObjectId(r)
-              : mongoose.Types.ObjectId(r.roomDetails?._id)
-          );
+      //   // Add or update flats & rooms
+      //   for (const flatData of floorData.roomDetails) {
+      //     const existingFlat = await ProjectFlats.findOne({
+      //       floorId: floorDoc._id,
+      //       flatNo: flatData.flatNo,
+      //       projectId: projectObjectId,
+      //     });
 
-          if (existingFlat) {
-            existingFlat.rooms = roomIds.map((id) => ({ roomId: id }));
-            existingFlat.updatedAt = Math.floor(Date.now() / 1000);
-            await existingFlat.save();
-          } else {
-            const newFlat = new ProjectFlats({
-              floorId: floorDoc._id,
-              projectId: projectObjectId,
-              flatNo: flatData.flatNo,
-              rooms: roomIds.map((id) => ({ roomId: id })),
-              createdBy: req.user.userId,
-            });
-            await newFlat.save();
-          }
-        }
-      }
+      //     const roomIds = flatData.rooms.map((r) =>
+      //       typeof r === "string"
+      //         ? mongoose.Types.ObjectId(r)
+      //         : mongoose.Types.ObjectId(r.roomDetails?._id)
+      //     );
+
+      //     if (existingFlat) {
+      //       existingFlat.rooms = roomIds.map((id) => ({ roomId: id }));
+      //       existingFlat.updatedAt = Math.floor(Date.now() / 1000);
+      //       await existingFlat.save();
+      //     } else {
+      //       const newFlat = new ProjectFlats({
+      //         floorId: floorDoc._id,
+      //         projectId: projectObjectId,
+      //         flatNo: flatData.flatNo,
+      //         rooms: roomIds.map((id) => ({ roomId: id })),
+      //         createdBy: req.user.userId,
+      //       });
+      //       await newFlat.save();
+      //     }
+      //   }
+      // }
 
       UtilController.sendSuccess(req, res, next, {
         message: "Project updated successfully",
         projectId: existingProject.projectId,
       });
     } catch (error) {
+      console.log("error: ", error);
       UtilController.sendError(req, res, next, error);
     }
   },
