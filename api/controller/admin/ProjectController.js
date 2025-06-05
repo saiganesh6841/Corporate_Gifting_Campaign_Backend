@@ -980,15 +980,16 @@ module.exports = {
   deleteImage: async (req, res, next) => {
     try {
       const { entryId, imageUrl } = req.body;
-      if (!entryId || !imageUrl) {
+      if (!entryId || !Array.isArray(imageUrl) || imageUrl.length === 0) {
         return UtilController.sendError(req, res, next, {
-          message: "entryId and imageUrl are required",
-          responseCode: 400,
+          message: "entryId and imageUrl array are required",
+          responseCode: returnCode.invalidSession,
         });
       }
+
       const result = await Entries.updateOne(
         { _id: entryId },
-        { $pull: { roomImages: { url: imageUrl } } }
+        { $pull: { roomImages: { url: { $in: imageUrl } } } }
       );
 
       if (result.modifiedCount === 0) {
