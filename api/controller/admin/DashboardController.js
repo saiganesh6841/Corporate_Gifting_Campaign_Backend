@@ -66,15 +66,13 @@ module.exports = {
   dashboardGraph: async (req, res, next) => {
     try {
       const { startDate, endDate, dateType, graphType } = req.query;
-      console.log(req.query);
+      // console.log(req.query);
 
       const timezoneOffsetHours = 5.5;
       const offsetInSeconds = timezoneOffsetHours * 3600;
       let start = Number(startDate) + offsetInSeconds;
       let end = Number(endDate) + offsetInSeconds;
       const result = {};
-
-      let responseCode = returnCode.validSession;
 
       const epochToDate = {
         $toDate: { $multiply: ["$createdAt", 1000] },

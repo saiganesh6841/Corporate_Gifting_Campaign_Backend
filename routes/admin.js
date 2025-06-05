@@ -38,6 +38,9 @@ router
 router
   .route("/project/update")
   .post(adminAuth, ProjectController.updateProject);
+router
+  .route("/project/deleteFloor")
+  .post(adminAuth, ProjectController.deleteFloor);
 router.route("/project/list").post(adminAuth, ProjectController.listProject);
 router.route("/project/get").post(adminAuth, ProjectController.getById);
 router.route("/project/view").post(adminAuth, ProjectController.projectView);
