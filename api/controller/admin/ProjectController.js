@@ -260,6 +260,69 @@ module.exports = {
   deleteFloor: async (req, res, next) => {
     try {
       const { floorId, projectId } = req.body;
+
+      const floorObjectId = UtilController.convertToMongoose(floorId);
+      const projectObjectId = UtilController.convertToMongoose(projectId);
+
+      const floor = await ProjectFloors.findOne({
+        _id: floorObjectId,
+        projectId: projectObjectId,
+      });
+
+      if (!floor) {
+        return UtilController.sendError(req, res, next, {
+          message: "Floor not found",
+          responseCode: returnCode.invalidSession,
+        });
+      }
+
+      await ProjectFloors.deleteOne({
+        _id: floorObjectId,
+        projectId: projectObjectId,
+      });
+
+      await ProjectFlats.deleteMany({
+        floorId: floorObjectId,
+        projectId: projectObjectId,
+      });
+
+      UtilController.sendSuccess(req, res, next, {
+        responseCode: returnCode.validSession,
+        message: "Successfully deleted floor and its related flats",
+      });
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
+
+  deleteFalt: async (req, res, next) => {
+    try {
+      const { flatId, projectId } = req.body;
+
+      const flatObjectId = UtilController.convertToMongoose(flatId);
+      const projectObjectId = UtilController.convertToMongoose(projectId);
+
+      const flat = await ProjectFlats.findOne({
+        _id: flatObjectId,
+        projectId: projectObjectId,
+      });
+
+      if (!flat) {
+        return UtilController.sendError(req, res, next, {
+          message: "flat not found",
+          responseCode: returnCode.invalidSession,
+        });
+      }
+
+      await ProjectFlats.deleteOne({
+        _id: flatObjectId,
+        projectId: projectObjectId,
+      });
+
+      UtilController.sendSuccess(req, res, next, {
+        responseCode: returnCode.validSession,
+        message: "Successfully deleted  flats",
+      });
     } catch (error) {
       UtilController.sendError(req, res, next, error);
     }
