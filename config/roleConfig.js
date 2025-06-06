@@ -121,22 +121,6 @@ module.exports = {
       enable: true,
       buttons: [
         {
-          label: "view",
-          enable: true,
-        },
-        {
-          label: "add",
-          enable: true,
-        },
-        {
-          label: "edit",
-          enable: true,
-        },
-        {
-          label: "delete",
-          enable: true,
-        },
-        {
           label: "query",
           enable: true,
         },

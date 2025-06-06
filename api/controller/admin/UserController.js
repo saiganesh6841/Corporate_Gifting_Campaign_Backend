@@ -69,6 +69,24 @@ module.exports = {
         {
           $match: queryObj,
         },
+        {
+          $lookup: {
+            from: "users",
+            localField: "createdBy",
+            foreignField: "_id",
+            as: "createdByUser",
+          },
+        },
+        {
+          $addFields: {
+            createdBy: { $arrayElemAt: ["$createdByUser.fullName", 0] },
+          },
+        },
+        {
+          $project: {
+            createdByUser: 0, // exclude the createdByUser array
+          },
+        },
         { $sort: sortOrder },
         { $skip: page * pageSize },
         { $limit: pageSize },
