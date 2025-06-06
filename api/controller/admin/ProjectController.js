@@ -148,6 +148,8 @@ module.exports = {
   },
   updateProject: async (req, res, next) => {
     try {
+      const session = await mongoose.startSession();
+
       const { ...updateObj } = req.body;
       console.log("updateObj: ", updateObj);
       const existingProject = await Project.findOne({
