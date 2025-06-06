@@ -71,6 +71,9 @@ module.exports = {
       if (filters.active === "All") {
         delete queryObj.active;
       }
+      if (!UtilController.isEmpty(filters.status)) {
+        queryObj["taskStatus"] = filters.status;
+      }
 
       let sortOrder = {};
 
@@ -103,8 +106,9 @@ module.exports = {
 
       if (!UtilController.isEmpty(searchKey)) {
         queryObj["$or"] = [
-          { roomId: { $regex: searchKey, $options: "i" } },
-          { roomName: { $regex: searchKey, $options: "i" } },
+          // { roomId: { $regex: searchKey, $options: "i" } },
+          // { roomName: { $regex: searchKey, $options: "i" } },
+          { taskId: { $regex: searchKey, $options: "i" } },
         ];
       }
       const pipeline = [

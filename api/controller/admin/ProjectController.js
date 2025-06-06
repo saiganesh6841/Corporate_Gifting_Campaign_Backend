@@ -440,6 +440,10 @@ module.exports = {
         delete queryObj.active;
       }
 
+      if (!UtilController.isEmpty(filters.status)) {
+        queryObj["status"] = filters.status;
+      }
+
       let sortOrder = {};
 
       sortOrder = {
