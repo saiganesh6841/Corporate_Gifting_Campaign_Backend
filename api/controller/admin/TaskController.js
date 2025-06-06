@@ -74,6 +74,7 @@ module.exports = {
       if (!UtilController.isEmpty(filters.status)) {
         queryObj["taskStatus"] = filters.status;
       }
+      let projectKeyword = req.body.projectKeyword;
 
       let sortOrder = {};
 
@@ -159,6 +160,20 @@ module.exports = {
             createdBy: {
               $arrayElemAt: ["$createdByUser.fullName", 0],
             },
+          },
+        },
+        {
+          $match: {
+            $or: [
+              !UtilController.isEmpty(projectKeyword)
+                ? {
+                    projectName: {
+                      $regex: `^${projectKeyword}$`,
+                      $options: "i",
+                    },
+                  }
+                : {},
+            ],
           },
         },
         { $sort: sortOrder },
@@ -567,6 +582,60 @@ module.exports = {
       });
     } catch (error) {
       UtilController.sendError(req, res, next, error);
+    }
+  },
+
+  projectsByTaskDropdown: async (req, res, next) => {
+    try {
+      const { keyword } = req.body;
+      const pipeline = [
+        {
+          $lookup: {
+            from: "projects",
+            localField: "projectId",
+            foreignField: "_id",
+            as: "projects",
+          },
+        },
+        {
+          $unwind: {
+            path: "$projects",
+            preserveNullAndEmptyArrays: false,
+          },
+        },
+        {
+          $group: {
+            _id: "$projects._id",
+            name: { $first: "$projects.projectName" },
+          },
+        },
+        ...(keyword
+          ? [
+              {
+                $match: {
+                  $or: [{ name: { $regex: keyword, $options: "i" } }],
+                },
+              },
+            ]
+          : []),
+        {
+          $sort: { name: 1 },
+        },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+          },
+        },
+      ];
+
+      let result = await Task.aggregate(pipeline);
+      UtilController.sendSuccess(req, res, next, {
+        result,
+      });
+    } catch (err) {
+      console.error(err);
+      UtilController.sendError(req, res, next, err);
     }
   },
 };
