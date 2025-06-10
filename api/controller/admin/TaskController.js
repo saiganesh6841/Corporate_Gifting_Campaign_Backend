@@ -93,7 +93,7 @@ module.exports = {
       }
 
       let searchKey = filters.keyword ?? "";
-      console.log("searchKey:", searchKey);
+      // console.log("searchKey:", searchKey);
 
       if (!UtilController.isEmpty(filters.startDate)) {
         queryObj["$and"] = [

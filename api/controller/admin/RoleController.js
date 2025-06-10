@@ -51,7 +51,7 @@ module.exports = {
       let sortOrder = {};
 
       sortOrder = {
-        createdAt: -1,
+        updatedAt: -1,
       };
 
       let page = 0;
@@ -94,6 +94,14 @@ module.exports = {
           },
         },
         {
+          $lookup: {
+            from: "users",
+            localField: "updatedBy",
+            foreignField: "_id",
+            as: "updatedByUser",
+          },
+        },
+        {
           $project: {
             _id: 1,
             name: 1,
@@ -105,6 +113,9 @@ module.exports = {
             // createdByUser: 1,
             createdByUser: {
               $arrayElemAt: ["$createdByUser.fullName", 0],
+            },
+            updatedByUser: {
+              $arrayElemAt: ["$updatedByUser.fullName", 0],
             },
           },
         },
@@ -158,16 +169,19 @@ module.exports = {
   },
   updateRole: async (req, res, next) => {
     try {
-      const { recordId, ...updateObj } = req.body;
-      if (!recordId) {
+      const { roleId, ...updateObj } = req.body;
+      if (!roleId) {
         return UtilController.sendError(req, res, next, {
           message: "Role ID is required",
           responseCode: returnCode.invalidRequest,
         });
       }
 
+      updateObj.updatedAt = Math.floor(new Date() / 1000);
+      updateObj.updatedBy = req.user.userId;
+
       const role = await Role.findByIdAndUpdate(
-        recordId,
+        roleId,
         { $set: updateObj },
         { new: true }
       ).lean();

@@ -12,10 +12,10 @@ module.exports = {
         });
       }
 
-      const currentDate = await UtilController.convertTOISOFormat();
+      const currentDate = UtilController.convertTOISOFormat();
 
       const createObj = {
-        userId: await UtilController.convertToMongoose(userId),
+        userId: UtilController.convertToMongoose(userId),
         attendanceDate: currentDate,
       };
 
@@ -28,6 +28,11 @@ module.exports = {
           responseCode: returnCode.validationError,
         });
       }
+
+      const status = UtilController.calculateAttendanceStatus(currentTimestamp);
+
+      // Add status to create object
+      createObj.status = status;
 
       const result = await Attendance.create(createObj);
 
@@ -51,11 +56,11 @@ module.exports = {
         });
       }
 
-      const currentDate = await UtilController.convertTOISOFormat();
+      const currentDate = UtilController.convertTOISOFormat();
       //   const currentDate = "2025-05-24";
 
       const updateObj = {
-        userId: await UtilController.convertToMongoose(userId),
+        userId: UtilController.convertToMongoose(userId),
         attendanceDate: currentDate,
         checkOut: null,
       };

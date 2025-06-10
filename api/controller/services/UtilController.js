@@ -290,4 +290,25 @@ module.exports = {
       return null;
     }
   },
+
+  calculateAttendanceStatus: (checkInTimestamp) => {
+    // Convert timestamp to Date object
+    const checkInDate = new Date(checkInTimestamp * 1000);
+
+    // Get the date part for creating 9:00 AM of the same day
+    const year = checkInDate.getFullYear();
+    const month = checkInDate.getMonth();
+    const day = checkInDate.getDate();
+
+    // Create 9:00 AM timestamp for the same date
+    const nineAM = new Date(year, month, day, 9, 0, 0, 0);
+    const nineAMTimestamp = Math.floor(nineAM.getTime() / 1000);
+
+    // Compare check-in time with 9:00 AM
+    if (checkInTimestamp <= nineAMTimestamp) {
+      return "present";
+    } else {
+      return "lateArrival";
+    }
+  },
 };

@@ -86,7 +86,7 @@ router.route("/room/get").post(RoomController.getRoomById);
 router.route("/role/create").post(RoleController.createRole);
 router.route("/role/list").post(RoleController.listRole);
 router.route("/role/get").post(RoleController.getRoleById);
-router.route("/role/update").post(RoleController.updateRole);
+router.route("/role/update").put(RoleController.updateRole);
 router.route("/role/delete").post(RoleController.deleteRole);
 
 // attendence
