@@ -42,7 +42,7 @@ module.exports = {
         result,
       });
     } catch (error) {
-      UtilController.sendError(req, res, next, err);
+      UtilController.sendError(req, res, next, error);
     }
   },
 
