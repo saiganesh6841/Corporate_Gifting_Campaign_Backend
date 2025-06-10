@@ -150,12 +150,12 @@ module.exports = {
 
           const isProduction = process.env.NODE_ENV === "production";
 
-          res.cookie("adminToken", token, {
-            httpOnly: true,
-            secure: isProduction,
-            sameSite: isProduction ? "none" : "strict",
-            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-          });
+          // res.cookie("adminToken", token, {
+          //   httpOnly: true,
+          //   secure: isProduction,
+          //   sameSite: isProduction ? "none" : "strict",
+          //   maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+          // });
 
           req.session.userType = userResult.userType;
           systemCache.del(req.sessionID);
