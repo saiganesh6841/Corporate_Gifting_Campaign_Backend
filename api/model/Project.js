@@ -29,7 +29,7 @@ const projectSchema = new mongoose.Schema({
     type: Number,
     default: "",
   },
-  endDate: { 
+  endDate: {
     type: Number,
     default: "",
   },
@@ -62,10 +62,14 @@ const projectSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["pending", "completed", "inprogress","cancelled"],
+    enum: ["pending", "completed", "inprogress", "cancelled"],
     default: "pending",
   },
   createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  },
+  updatedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   },

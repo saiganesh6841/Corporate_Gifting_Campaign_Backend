@@ -18,7 +18,7 @@ const taskSchema = new mongoose.Schema({
     ref: "Project",
   },
   floorNo: {
-    type: mongoose.Schema.Types.ObjectId, 
+    type: mongoose.Schema.Types.ObjectId,
     ref: "ProjectFloors",
   },
   flatNo: {
@@ -47,6 +47,10 @@ const taskSchema = new mongoose.Schema({
     default: () => Math.floor(Date.now() / 1000),
   },
   createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "user",
+  },
+  updatedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "user",
   },

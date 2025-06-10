@@ -90,6 +90,7 @@ module.exports = {
       recordId,
       {
         ...req.body,
+        updatedBy: userId,
         updatedAt: Math.floor(Date.now() / 1000),
       },
       { new: true }
@@ -149,7 +150,7 @@ module.exports = {
       let sortOrder = {};
 
       sortOrder = {
-        createdAt: -1,
+        updatedAt: -1,
       };
 
       let page = 0;
@@ -194,6 +195,14 @@ module.exports = {
           },
         },
         {
+          $lookup: {
+            from: "users",
+            localField: "updatedBy",
+            foreignField: "_id",
+            as: "updatedByUser",
+          },
+        },
+        {
           $project: {
             roomId: 1,
             roomName: 1,
@@ -204,6 +213,9 @@ module.exports = {
             active: 1,
             createdBy: {
               $arrayElemAt: ["$createdByUser.fullName", 0],
+            },
+            updatedBy: {
+              $arrayElemAt: ["$updatedByUser.fullName", 0],
             },
           },
         },

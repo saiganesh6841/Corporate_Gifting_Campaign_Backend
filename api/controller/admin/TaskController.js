@@ -124,6 +124,14 @@ module.exports = {
         {
           $lookup: {
             from: "users",
+            localField: "updatedBy",
+            foreignField: "_id",
+            as: "updatedByUser",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
             localField: "workerId",
             foreignField: "_id",
             as: "workerDetails",
@@ -156,6 +164,9 @@ module.exports = {
             },
             createdBy: {
               $arrayElemAt: ["$createdByUser.fullName", 0],
+            },
+            updatedBy: {
+              $arrayElemAt: ["$updatedByUser.fullName", 0],
             },
           },
         },
@@ -490,6 +501,7 @@ module.exports = {
         recordId,
         {
           ...req.body,
+          updatedBy: req.user.userId,
           updatedAt: Math.floor(Date.now() / 1000),
         },
         { new: true }

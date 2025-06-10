@@ -174,6 +174,7 @@ module.exports = {
       existingProject.uploadImage = updateObj.uploadImage;
       existingProject.status = updateObj.status;
       existingProject.updatedAt = Math.floor(Date.now() / 1000);
+      existingProject.updatedBy = req.user.userId;
 
       await existingProject.save();
 
@@ -488,6 +489,22 @@ module.exports = {
           $match: queryObj,
         },
         {
+          $lookup: {
+            from: "users",
+            localField: "createdBy",
+            foreignField: "_id",
+            as: "createdByDetails",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "updatedBy",
+            foreignField: "_id",
+            as: "updatedByDetails",
+          },
+        },
+        {
           $project: {
             projectId: 1,
             projectName: 1,
@@ -498,6 +515,12 @@ module.exports = {
             updatedAt: 1,
             endDate: 1,
             status: 1,
+            createdBy: {
+              $arrayElemAt: ["$createdByDetails.fullName", 0],
+            },
+            updatedBy: {
+              $arrayElemAt: ["$updatedByDetails.fullName", 0],
+            },
           },
         },
         { $sort: sortOrder },
