@@ -98,7 +98,7 @@ module.exports = {
         {
           $project: {
             createdByUser: 0,
-            updatedByUser: 0, // exclude the createdByUser array
+            updatedByUser: 0,
           },
         },
         { $sort: sortOrder },
