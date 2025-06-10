@@ -48,8 +48,8 @@ module.exports = {
       );
 
       if (userCode === returnCode.passwordMatched) {
-        console.log("dd",req.sessionID);
-        
+        console.log("dd", req.sessionID);
+
         systemCache.set(
           req.sessionID,
           user._id,
@@ -265,6 +265,7 @@ module.exports = {
             secure: false,
           });
           res.clearCookie("adminToken");
+          req.user = {};
 
           UtilController.sendSuccess(req, res, next, {
             responseCode: returnCode.validSession,
