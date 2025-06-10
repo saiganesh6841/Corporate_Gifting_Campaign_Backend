@@ -30,6 +30,7 @@ module.exports = {
       }
 
       const status = UtilController.calculateAttendanceStatus(currentTimestamp);
+      console.log('status: ', status);
 
       // Add status to create object
       createObj.status = status;
@@ -42,6 +43,7 @@ module.exports = {
         result,
       });
     } catch (error) {
+      console.log('error: ', error);
       UtilController.sendError(req, res, next, error);
     }
   },

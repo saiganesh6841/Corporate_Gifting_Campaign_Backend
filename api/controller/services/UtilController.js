@@ -292,8 +292,10 @@ module.exports = {
   },
 
   calculateAttendanceStatus: (checkInTimestamp) => {
+    console.log('checkInTimestamp: ', checkInTimestamp);
     // Convert timestamp to Date object
     const checkInDate = new Date(checkInTimestamp * 1000);
+    console.log('checkInDate: ', checkInDate);
 
     // Get the date part for creating 9:00 AM of the same day
     const year = checkInDate.getFullYear();
@@ -303,6 +305,7 @@ module.exports = {
     // Create 9:00 AM timestamp for the same date
     const nineAM = new Date(year, month, day, 9, 0, 0, 0);
     const nineAMTimestamp = Math.floor(nineAM.getTime() / 1000);
+    console.log('nineAMTimestamp: ', nineAMTimestamp);
 
     // Compare check-in time with 9:00 AM
     if (checkInTimestamp <= nineAMTimestamp) {
