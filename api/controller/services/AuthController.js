@@ -75,6 +75,8 @@ module.exports = {
   },
   verifyAuthTokenForApiRequest: async function (req, res, next) {
     try {
+      console.log("req.headers.authtoken: ", req.headers.authtoken);
+
       if (UtilController.isEmpty(req.headers.authtoken)) {
         return UtilController.sendSuccess(
           req,

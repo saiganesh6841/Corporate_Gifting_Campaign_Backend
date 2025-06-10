@@ -79,6 +79,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "build")));
 app.use("/app", express.static(path.join(__dirname, "build")));
 app.use(express.static(path.join(__dirname, "public")));
+
 app.use("/", function (req, res, next) {
   AuthController.checkRequestAuth(req, res, next);
 });
