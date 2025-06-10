@@ -248,7 +248,7 @@ module.exports = {
   updateUser: async (req, res, next) => {
     try {
       const { userId, ...updateObj } = req.body;
-      console.log("userId: ", userId);
+      // console.log("userId: ", userId);
 
       if (UtilController.isEmpty(userId)) {
         return UtilController.sendSuccess(req, res, next, {
@@ -297,6 +297,7 @@ module.exports = {
       }
 
       updateObj["updatedBy"] = req.user?.userId;
+      updateObj["updatedAt"] = Math.floor(Date.now() / 1000);
 
       const result = await User.findOneAndUpdate(
         { userId: userId },

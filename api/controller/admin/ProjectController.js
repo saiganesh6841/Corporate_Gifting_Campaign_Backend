@@ -233,7 +233,7 @@ module.exports = {
               createdBy: req.user.userId,
             });
           } else {
-            const existingRoomIds = flat.rooms.map((r) => r.roomId.toString());
+            const existingRoomIds = flat.rooms.map((r) => r.roomId?.toString());
             const newRooms = flatDetail.rooms.filter(
               (roomId) => !existingRoomIds.includes(roomId)
             );
