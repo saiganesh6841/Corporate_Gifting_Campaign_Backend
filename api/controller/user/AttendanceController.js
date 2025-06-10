@@ -13,6 +13,8 @@ module.exports = {
       }
 
       const currentDate = UtilController.convertTOISOFormat();
+      const currentTimestamp = Math.floor(Date.now() / 1000);
+      console.log('currentTimestamp: ', currentTimestamp);
 
       const createObj = {
         userId: UtilController.convertToMongoose(userId),
