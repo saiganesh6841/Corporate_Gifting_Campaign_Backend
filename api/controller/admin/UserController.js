@@ -78,13 +78,27 @@ module.exports = {
           },
         },
         {
+          $lookup: {
+            from: "users",
+            localField: "updatedBy",
+            foreignField: "_id",
+            as: "updatedByUser",
+          },
+        },
+        {
           $addFields: {
             createdBy: { $arrayElemAt: ["$createdByUser.fullName", 0] },
           },
         },
         {
+          $addFields: {
+            updatedBy: { $arrayElemAt: ["$updatedByUser.fullName", 0] },
+          },
+        },
+        {
           $project: {
-            createdByUser: 0, // exclude the createdByUser array
+            createdByUser: 0,
+            updatedByUser: 0, // exclude the createdByUser array
           },
         },
         { $sort: sortOrder },
@@ -281,6 +295,8 @@ module.exports = {
         ).toString();
         updateObj["password"] = encryptedPassword;
       }
+
+      updateObj["updatedBy"] = req.user?.userId;
 
       const result = await User.findOneAndUpdate(
         { userId: userId },

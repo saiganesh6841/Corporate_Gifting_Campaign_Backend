@@ -79,7 +79,7 @@ module.exports = {
       let sortOrder = {};
 
       sortOrder = {
-        createdAt: -1,
+        updatedAt: -1,
       };
 
       let page = 0;
@@ -93,6 +93,7 @@ module.exports = {
       }
 
       let searchKey = filters.keyword ?? "";
+      console.log("searchKey:", searchKey);
 
       if (!UtilController.isEmpty(filters.startDate)) {
         queryObj["$and"] = [
@@ -105,12 +106,8 @@ module.exports = {
         ];
       }
 
-      if (!UtilController.isEmpty(searchKey)) {
-        queryObj["$or"] = [
-          // { roomId: { $regex: searchKey, $options: "i" } },
-          // { roomName: { $regex: searchKey, $options: "i" } },
-          { taskId: { $regex: searchKey, $options: "i" } },
-        ];
+      if (!UtilController.isEmpty(filters.status)) {
+        queryObj["taskStatus"] = filters.status;
       }
       const pipeline = [
         {
@@ -165,14 +162,13 @@ module.exports = {
         {
           $match: {
             $or: [
-              !UtilController.isEmpty(projectKeyword)
-                ? {
-                    projectName: {
-                      $regex: `^${projectKeyword}$`,
-                      $options: "i",
-                    },
-                  }
-                : {},
+              { taskId: { $regex: searchKey, $options: "i" } },
+              { taskDescription: { $regex: searchKey, $options: "i" } },
+              { taskStatus: { $regex: searchKey, $options: "i" } },
+              { workerDetails: { $regex: searchKey, $options: "i" } },
+              { workerMobileNumber: { $regex: searchKey, $options: "i" } },
+              { projectName: { $regex: searchKey, $options: "i" } },
+              { createdBy: { $regex: searchKey, $options: "i" } },
             ],
           },
         },
