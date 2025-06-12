@@ -304,6 +304,7 @@ module.exports = {
 
     // Create 9:00 AM timestamp for the same date
     const nineAM = new Date(year, month, day, 9, 0, 0, 0);
+    console.log('nineAM: ', nineAM);
     const nineAMTimestamp = Math.floor(nineAM.getTime() / 1000);
     console.log('nineAMTimestamp: ', nineAMTimestamp);
 

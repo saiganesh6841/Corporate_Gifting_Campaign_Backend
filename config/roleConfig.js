@@ -186,36 +186,36 @@ module.exports = {
         },
       ],
     },
-    {
-      label: "Schedule Time",
-      enable: true,
-      buttons: [
-        {
-          label: "view",
-          enable: true,
-        },
-        {
-          label: "add",
-          enable: true,
-        },
-        {
-          label: "edit",
-          enable: true,
-        },
-        {
-          label: "delete",
-          enable: true,
-        },
-        {
-          label: "query",
-          enable: true,
-        },
-        {
-          label: "export",
-          enable: true,
-        },
-      ],
-    },
+    // {
+    //   label: "Schedule Time",
+    //   enable: true,
+    //   buttons: [
+    //     {
+    //       label: "view",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "add",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "edit",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "delete",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "query",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "export",
+    //       enable: true,
+    //     },
+    //   ],
+    // },
     {
       label: "Room",
       enable: true,
