@@ -19,7 +19,7 @@ module.exports = {
       let sortOrder = {};
 
       sortOrder = {
-        createdAt: -1,
+        updatedAt: -1,
       };
 
       let page = 0;
@@ -302,6 +302,7 @@ module.exports = {
       const result = await User.findOneAndUpdate(
         { userId: userId },
         { $set: updateObj },
+        { updatedAt: Math.floor(Date.now() / 1000) },
         { new: true }
       );
 
