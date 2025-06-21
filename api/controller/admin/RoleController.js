@@ -194,7 +194,7 @@ module.exports = {
         });
 
         if (existingRole) {
-          return UtilController.sendError(req, res, next, {
+          return UtilController.sendSuccess(req, res, next, {
             message: "A role with the same name already exists",
             responseCode: returnCode.duplicate,
           });
