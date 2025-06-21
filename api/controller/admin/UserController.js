@@ -173,18 +173,18 @@ module.exports = {
       });
 
       if (existingUser) {
-        let messages = [];
+        let messages;
 
         if (existingUser.email === createObj.email) {
-          messages.push("Email already exists.");
+          messages = "Email already exists.";
         }
 
         if (existingUser.mobileNumber === createObj.mobileNumber) {
-          messages.push("Mobile number already exists.");
+          messages = "Mobile number already exists.";
         }
 
         return UtilController.sendSuccess(req, res, next, {
-          messages, // will be an array of strings
+          message: messages, // will be an array of strings
           responseCode: returnCode.duplicate,
         });
       } else {
@@ -283,34 +283,29 @@ module.exports = {
         });
       }
 
-      if (!UtilController.isEmpty(updateObj?.email)) {
-        const emailExists = await User.findOne({
-          email: updateObj.email,
-          userId: { $ne: userId },
-          active: true,
-        });
+      const existingUser = await User.findOne({
+        $or: [
+          { email: updateObj.email },
+          { mobileNumber: updateObj.mobileNumber },
+        ],
+        active: true,
+      });
 
-        if (emailExists) {
-          return UtilController.sendSuccess(req, res, next, {
-            message: "Email already exists",
-            responseCode: returnCode.duplicate,
-          });
+      if (existingUser) {
+        let messages;
+
+        if (existingUser.email === updateObj.email) {
+          messages = "Email already exists.";
         }
-      }
 
-      if (!UtilController.isEmpty(updateObj?.mobileNumber)) {
-        const mobileExists = await User.findOne({
-          mobileNumber: updateObj.mobileNumber,
-          userId: { $ne: userId },
-          active: true,
-        });
-
-        if (mobileExists) {
-          return UtilController.sendSuccess(req, res, next, {
-            message: "Mobile number already exists",
-            responseCode: returnCode.duplicate,
-          });
+        if (existingUser.mobileNumber === updateObj.mobileNumber) {
+          messages = "Mobile number already exists.";
         }
+
+        return UtilController.sendSuccess(req, res, next, {
+          message: messages, // will be an array of strings
+          responseCode: returnCode.duplicate,
+        });
       }
 
       if (!UtilController.isEmpty(updateObj?.password)) {
