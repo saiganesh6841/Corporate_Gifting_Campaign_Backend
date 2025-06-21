@@ -77,10 +77,6 @@ module.exports = {
         ];
       }
 
-      if (!UtilController.isEmpty(searchKey)) {
-        queryObj["$or"] = [{ name: { $regex: searchKey, $options: "i" } }];
-      }
-
       const pipeline = [
         {
           $match: queryObj,
@@ -119,6 +115,19 @@ module.exports = {
             },
           },
         },
+        ...(searchKey
+          ? [
+              {
+                $match: {
+                  $or: [
+                    { name: { $regex: searchKey, $options: "i" } },
+                    { createdByUser: { $regex: searchKey, $options: "i" } },
+                    { updatedByUser: { $regex: searchKey, $options: "i" } },
+                  ],
+                },
+              },
+            ]
+          : []),
         { $sort: sortOrder },
         { $skip: page * pageSize },
         { $limit: pageSize },
@@ -175,6 +184,23 @@ module.exports = {
           message: "Role ID is required",
           responseCode: returnCode.invalidRequest,
         });
+      }
+
+      // 🔍 Check if another role with the same name exists (excluding the one being updated)
+      if (name) {
+        const existingRole = await Role.findOne({
+          _id: { $ne: roleId },
+          name: name,
+        });
+
+        if (existingRole) {
+          return UtilController.sendError(req, res, next, {
+            message: "A role with the same name already exists",
+            responseCode: returnCode.duplicate,
+          });
+        }
+
+        updateObj.name = name;
       }
 
       updateObj.updatedAt = Math.floor(new Date() / 1000);

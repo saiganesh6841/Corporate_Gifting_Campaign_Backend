@@ -180,6 +180,7 @@ module.exports = {
               { workerMobileNumber: { $regex: searchKey, $options: "i" } },
               { projectName: { $regex: searchKey, $options: "i" } },
               { createdBy: { $regex: searchKey, $options: "i" } },
+              { updatedBy: { $regex: searchKey, $options: "i" } },
             ],
           },
         },

@@ -53,16 +53,15 @@ module.exports = {
         ];
       }
 
-      if (!UtilController.isEmpty(searchKey)) {
-        queryObj["$or"] = [
-          { fullName: { $regex: searchKey, $options: "i" } },
-          { userId: { $regex: searchKey, $options: "i" } },
-          { userType: { $regex: searchKey, $options: "i" } },
-          { mobileNumber: { $regex: searchKey, $options: "i" } },
-          { email: { $regex: searchKey, $options: "i" } },
-        ];
-      }
-
+      // if (!UtilController.isEmpty(searchKey)) {
+      //   queryObj["$or"] = [
+      //     { fullName: { $regex: searchKey, $options: "i" } },
+      //     { userId: { $regex: searchKey, $options: "i" } },
+      //     { userType: { $regex: searchKey, $options: "i" } },
+      //     { mobileNumber: { $regex: searchKey, $options: "i" } },
+      //     { email: { $regex: searchKey, $options: "i" } },
+      //   ];
+      // }
       // console.log("queryObj: ", queryObj);
 
       const pipeline = [
@@ -95,6 +94,23 @@ module.exports = {
             updatedBy: { $arrayElemAt: ["$updatedByUser.fullName", 0] },
           },
         },
+        ...(searchKey
+          ? [
+              {
+                $match: {
+                  $or: [
+                    { fullName: { $regex: searchKey, $options: "i" } },
+                    { userId: { $regex: searchKey, $options: "i" } },
+                    { userType: { $regex: searchKey, $options: "i" } },
+                    { mobileNumber: { $regex: searchKey, $options: "i" } },
+                    { email: { $regex: searchKey, $options: "i" } },
+                    { createdBy: { $regex: searchKey, $options: "i" } },
+                    { updatedBy: { $regex: searchKey, $options: "i" } },
+                  ],
+                },
+              },
+            ]
+          : []),
         {
           $project: {
             createdByUser: 0,

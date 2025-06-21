@@ -135,10 +135,6 @@ module.exports = {
       enable: true,
       buttons: [
         {
-          label: "view",
-          enable: true,
-        },
-        {
           label: "add",
           enable: true,
         },
@@ -251,19 +247,11 @@ module.exports = {
       enable: true,
       buttons: [],
     },
-    {
-      label: "Settings",
-      enable: true,
-      buttons: [],
-    },
+
     {
       label: "Security",
       enable: true,
       buttons: [],
-    },
-    {
-      label: "export",
-      enable: true,
     },
   ],
 };

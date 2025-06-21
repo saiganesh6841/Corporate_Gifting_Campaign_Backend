@@ -474,15 +474,15 @@ module.exports = {
         ];
       }
 
-      if (!UtilController.isEmpty(searchKey)) {
-        queryObj["$or"] = [
-          { projectId: { $regex: searchKey, $options: "i" } },
-          { projectName: { $regex: searchKey, $options: "i" } },
-          { clientName: { $regex: searchKey, $options: "i" } },
-          { location: { $regex: searchKey, $options: "i" } },
-          { status: { $regex: searchKey, $options: "i" } },
-        ];
-      }
+      // if (!UtilController.isEmpty(searchKey)) {
+      //   queryObj["$or"] = [
+      //     { projectId: { $regex: searchKey, $options: "i" } },
+      //     { projectName: { $regex: searchKey, $options: "i" } },
+      //     { clientName: { $regex: searchKey, $options: "i" } },
+      //     { location: { $regex: searchKey, $options: "i" } },
+      //     { status: { $regex: searchKey, $options: "i" } },
+      //   ];
+      // }
 
       const pipeline = [
         {
@@ -523,6 +523,23 @@ module.exports = {
             },
           },
         },
+        ...(searchKey
+          ? [
+              {
+                $match: {
+                  $or: [
+                    { projectId: { $regex: searchKey, $options: "i" } },
+                    { projectName: { $regex: searchKey, $options: "i" } },
+                    { clientName: { $regex: searchKey, $options: "i" } },
+                    { location: { $regex: searchKey, $options: "i" } },
+                    { status: { $regex: searchKey, $options: "i" } },
+                    { createdBy: { $regex: searchKey, $options: "i" } },
+                    { updatedBy: { $regex: searchKey, $options: "i" } },
+                  ],
+                },
+              },
+            ]
+          : []),
         { $sort: sortOrder },
         { $skip: page * pageSize },
         { $limit: pageSize },

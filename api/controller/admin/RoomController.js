@@ -176,12 +176,6 @@ module.exports = {
         ];
       }
 
-      if (!UtilController.isEmpty(searchKey)) {
-        queryObj["$or"] = [
-          { roomId: { $regex: searchKey, $options: "i" } },
-          { roomName: { $regex: searchKey, $options: "i" } },
-        ];
-      }
       const pipeline = [
         {
           $match: queryObj,
@@ -219,6 +213,20 @@ module.exports = {
             },
           },
         },
+        ...(searchKey
+          ? [
+              {
+                $match: {
+                  $or: [
+                    { roomId: { $regex: searchKey, $options: "i" } },
+                    { roomName: { $regex: searchKey, $options: "i" } },
+                    { createdBy: { $regex: searchKey, $options: "i" } },
+                    { updatedBy: { $regex: searchKey, $options: "i" } },
+                  ],
+                },
+              },
+            ]
+          : []),
         { $sort: sortOrder },
         { $skip: page * pageSize },
         { $limit: pageSize },
