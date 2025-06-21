@@ -6,6 +6,7 @@ module.exports = {
       "/verifyOtp",
       "/create/user",
       "/create/project",
+      "/upload/file",
     ],
     language: [],
   },

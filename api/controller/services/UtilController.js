@@ -132,65 +132,55 @@ module.exports = {
     }
   },
   uploadFiles: async function (req, res, next) {
+    console.log("uploadFiles");
     try {
-      const attachmentUrlArray = [];
-      const bucket = awsConfig.aws.bucket + "/" + req.body.bucketName;
-      const isPrivate = req.body.isPrivate === true;
+      //var attachmentUrl = "";
+      var attachmentUrlArray = [];
+      var attachmentName;
+      var code = 1;
+      console.log(req.body);
+      if (
+        !(req.files === null || req.files === undefined) &&
+        !(req.files.attachment === undefined)
+      ) {
+        // to get the bucket name based on input condition, starts Here
+        var bucket = awsConfig.aws.bucket + "/" + req.body.bucketName;
 
-      if (req.files && req.files.attachment) {
-        const attachmentObj = req.files.attachment;
-        console.log(attachmentObj);
-
+        // ends here
+        var attachmentObj = req.files.attachment;
         if (Array.isArray(attachmentObj)) {
-          // Handle multiple files
-          const uploadPromises = attachmentObj.map(async (file) => {
-            const attachmentName = Date.now() + "_" + file.originalname;
-            const attachmentUrl = link.concat(
-              bucket + "/" + encodeURIComponent(attachmentName)
+          for (var i = 0; i < attachmentObj.length; i++) {
+            attachmentName = Date.now() + "_" + attachmentObj[i].originalname;
+            attachmentUrlArray.push(
+              link.concat(bucket + "/" + encodeURIComponent(attachmentName))
             );
-            attachmentUrlArray.push(attachmentUrl);
-            console.log(attachmentUrl);
-
             await AwsController.upload2AWS(
-              file.path,
+              attachmentObj[i].path,
               bucket,
               attachmentName,
-              file.mimetype
-            );
-          });
-
-          await Promise.all(uploadPromises);
-
-          if (isPrivate) {
-            const data = {
-              attachmentName: attachmentObj[0].originalname, // or adjust based on needs
-              attachmentUrl: attachmentUrlArray[0],
-            };
-            module.exports.saveFile(req, res, next, data);
-          } else {
-            module.exports.sendSuccess(req, res, next, {
-              attachmentUrl: attachmentUrlArray,
-            });
+              attachmentObj[i].mimetype
+            ); // this is async call, will not wait until to finish upload
           }
         } else {
-          // Handle single file
-          const file = attachmentObj;
-          const attachmentName = Date.now() + "_" + file.originalname;
-          const attachmentUrl = link.concat(
-            bucket + "/" + encodeURIComponent(attachmentName)
+          var attachmentPath = attachmentObj.path;
+          console.log("attachmentPath: ", attachmentPath);
+          console.log("attachmentObj: ", attachmentObj);
+          attachmentName = Date.now() + "_" + attachmentObj.originalname;
+          //  attachmentUrl = link.concat(bucket + '/' + attachmentName);
+          attachmentUrlArray.push(
+            link.concat(bucket + "/" + encodeURIComponent(attachmentName))
           );
-          console.log(attachmentUrl);
-          attachmentUrlArray.push(attachmentUrl);
-
-          await AwsController.uploadSingleFile(
-            file.path,
+          await AwsController.upload2AWS(
+            attachmentPath,
             bucket,
             attachmentName,
-            file.mimetype
-          );
-
-          if (isPrivate) {
-            const data = {
+            attachmentObj.mimetype
+          ); // this is async call, will not wait until to finish upload
+          if (
+            !module.exports.isEmpty(req.body.isPrivate) &&
+            req.body.isPrivate == "true"
+          ) {
+            data = {
               attachmentName,
               attachmentUrl: attachmentUrlArray[0],
             };
@@ -201,14 +191,6 @@ module.exports = {
             });
           }
         }
-      } else {
-        // Handle the case where no files are provided
-        module.exports.sendError(
-          req,
-          res,
-          next,
-          new Error("No files uploaded")
-        );
       }
     } catch (err) {
       console.error(err);
@@ -292,10 +274,10 @@ module.exports = {
   },
 
   calculateAttendanceStatus: (checkInTimestamp) => {
-    console.log('checkInTimestamp: ', checkInTimestamp);
+    console.log("checkInTimestamp: ", checkInTimestamp);
     // Convert timestamp to Date object
     const checkInDate = new Date(checkInTimestamp * 1000);
-    console.log('checkInDate: ', checkInDate);
+    console.log("checkInDate: ", checkInDate);
 
     // Get the date part for creating 9:00 AM of the same day
     const year = checkInDate.getFullYear();
@@ -304,9 +286,9 @@ module.exports = {
 
     // Create 9:00 AM timestamp for the same date
     const nineAM = new Date(year, month, day, 9, 0, 0, 0);
-    console.log('nineAM: ', nineAM);
+    console.log("nineAM: ", nineAM);
     const nineAMTimestamp = Math.floor(nineAM.getTime() / 1000);
-    console.log('nineAMTimestamp: ', nineAMTimestamp);
+    console.log("nineAMTimestamp: ", nineAMTimestamp);
 
     // Compare check-in time with 9:00 AM
     if (checkInTimestamp <= nineAMTimestamp) {
