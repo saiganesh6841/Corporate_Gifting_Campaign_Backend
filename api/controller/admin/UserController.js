@@ -173,8 +173,18 @@ module.exports = {
       });
 
       if (existingUser) {
+        let messages = [];
+
+        if (existingUser.email === createObj.email) {
+          messages.push("Email already exists.");
+        }
+
+        if (existingUser.mobileNumber === createObj.mobileNumber) {
+          messages.push("Mobile number already exists.");
+        }
+
         return UtilController.sendSuccess(req, res, next, {
-          message: "email or mobile number already exists",
+          messages, // will be an array of strings
           responseCode: returnCode.duplicate,
         });
       } else {
