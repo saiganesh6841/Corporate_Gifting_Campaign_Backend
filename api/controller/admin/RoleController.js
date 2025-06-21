@@ -178,7 +178,7 @@ module.exports = {
   },
   updateRole: async (req, res, next) => {
     try {
-      const { roleId, ...updateObj } = req.body;
+      const { roleId, name, ...updateObj } = req.body;
       if (!roleId) {
         return UtilController.sendError(req, res, next, {
           message: "Role ID is required",
