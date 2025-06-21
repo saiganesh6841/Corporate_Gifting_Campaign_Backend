@@ -5,6 +5,7 @@ var Tag = require("../../model/Tag");
 const AWS = require("aws-sdk");
 const awsConfig = require("./../../../config/connection");
 const AwsController = require("./AwsController");
+const fs = require("fs");
 
 AWS.config.update({
   secretAccessKey: awsConfig.aws.secretAccessKey,
