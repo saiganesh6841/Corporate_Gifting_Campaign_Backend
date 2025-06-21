@@ -291,22 +291,22 @@ module.exports = {
         active: true,
       });
 
-      if (existingUser) {
-        let messages;
+      // if (existingUser) {
+      //   let messages;
 
-        if (existingUser.email === updateObj.email) {
-          messages = "Email already exists.";
-        }
+      //   if (existingUser.email === updateObj.email) {
+      //     messages = "Email already exists.";
+      //   }
 
-        if (existingUser.mobileNumber === updateObj.mobileNumber) {
-          messages = "Mobile number already exists.";
-        }
+      //   if (existingUser.mobileNumber === updateObj.mobileNumber) {
+      //     messages = "Mobile number already exists.";
+      //   }
 
-        return UtilController.sendSuccess(req, res, next, {
-          message: messages, // will be an array of strings
-          responseCode: returnCode.duplicate,
-        });
-      }
+      //   return UtilController.sendSuccess(req, res, next, {
+      //     message: messages, // will be an array of strings
+      //     responseCode: returnCode.duplicate,
+      //   });
+      // }
 
       if (!UtilController.isEmpty(updateObj?.password)) {
         const password = updateObj.password;
