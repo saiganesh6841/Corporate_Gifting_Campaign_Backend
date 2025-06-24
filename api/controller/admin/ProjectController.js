@@ -119,7 +119,7 @@ module.exports = {
             createdAt: Math.floor(Date.now() / 1000),
             updatedAt: Math.floor(Date.now() / 1000),
             rooms: flat.rooms.map((roomId) => ({
-              roomId: UtilController.convertToMongoose(roomId),
+              roomId: UtilController.convertToMongoose(roomId.roomDetails._id),
               roomImages: [],
             })),
           };
