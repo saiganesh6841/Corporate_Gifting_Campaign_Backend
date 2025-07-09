@@ -84,7 +84,7 @@ module.exports = {
       const formattedDuration = `${hours}h ${minutes}m`;
 
       const status =
-        UtilController.calculateAttendanceStatus(totalDurationSeconds);
+        UtilController.calculateAttendanceStatus(totalDuration);
 
       const result = await Attendance.findOneAndUpdate(
         updateObj,
