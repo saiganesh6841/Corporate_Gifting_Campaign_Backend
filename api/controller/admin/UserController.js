@@ -19,7 +19,7 @@ module.exports = {
       let sortOrder = {};
 
       sortOrder = {
-        createdAt: -1,
+        updatedAt: -1,
       };
 
       let page = 0;
@@ -53,21 +53,69 @@ module.exports = {
         ];
       }
 
-      if (!UtilController.isEmpty(searchKey)) {
-        queryObj["$or"] = [
-          { fullName: { $regex: searchKey, $options: "i" } },
-          { userId: { $regex: searchKey, $options: "i" } },
-          { userType: { $regex: searchKey, $options: "i" } },
-          { mobileNumber: { $regex: searchKey, $options: "i" } },
-          { email: { $regex: searchKey, $options: "i" } },
-        ];
-      }
-
+      // if (!UtilController.isEmpty(searchKey)) {
+      //   queryObj["$or"] = [
+      //     { fullName: { $regex: searchKey, $options: "i" } },
+      //     { userId: { $regex: searchKey, $options: "i" } },
+      //     { userType: { $regex: searchKey, $options: "i" } },
+      //     { mobileNumber: { $regex: searchKey, $options: "i" } },
+      //     { email: { $regex: searchKey, $options: "i" } },
+      //   ];
+      // }
       // console.log("queryObj: ", queryObj);
 
       const pipeline = [
         {
           $match: queryObj,
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "createdBy",
+            foreignField: "_id",
+            as: "createdByUser",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "updatedBy",
+            foreignField: "_id",
+            as: "updatedByUser",
+          },
+        },
+        {
+          $addFields: {
+            createdBy: { $arrayElemAt: ["$createdByUser.fullName", 0] },
+          },
+        },
+        {
+          $addFields: {
+            updatedBy: { $arrayElemAt: ["$updatedByUser.fullName", 0] },
+          },
+        },
+        ...(searchKey
+          ? [
+              {
+                $match: {
+                  $or: [
+                    { fullName: { $regex: searchKey, $options: "i" } },
+                    { userId: { $regex: searchKey, $options: "i" } },
+                    { userType: { $regex: searchKey, $options: "i" } },
+                    { mobileNumber: { $regex: searchKey, $options: "i" } },
+                    { email: { $regex: searchKey, $options: "i" } },
+                    { createdBy: { $regex: searchKey, $options: "i" } },
+                    { updatedBy: { $regex: searchKey, $options: "i" } },
+                  ],
+                },
+              },
+            ]
+          : []),
+        {
+          $project: {
+            createdByUser: 0,
+            updatedByUser: 0,
+          },
         },
         { $sort: sortOrder },
         { $skip: page * pageSize },
@@ -125,8 +173,18 @@ module.exports = {
       });
 
       if (existingUser) {
+        let messages;
+
+        if (existingUser.email === createObj.email) {
+          messages = "Email already exists.";
+        }
+
+        if (existingUser.mobileNumber === createObj.mobileNumber) {
+          messages = "Mobile number already exists.";
+        }
+
         return UtilController.sendSuccess(req, res, next, {
-          message: "email or mobile number already exists",
+          message: messages, // will be an array of strings
           responseCode: returnCode.duplicate,
         });
       } else {
@@ -216,7 +274,7 @@ module.exports = {
   updateUser: async (req, res, next) => {
     try {
       const { userId, ...updateObj } = req.body;
-      console.log("userId: ", userId);
+      // console.log("userId: ", userId);
 
       if (UtilController.isEmpty(userId)) {
         return UtilController.sendSuccess(req, res, next, {
@@ -225,35 +283,30 @@ module.exports = {
         });
       }
 
-      if (!UtilController.isEmpty(updateObj?.email)) {
-        const emailExists = await User.findOne({
-          email: updateObj.email,
-          userId: { $ne: userId },
-          active: true,
-        });
+      const existingUser = await User.findOne({
+        $or: [
+          { email: updateObj.email },
+          { mobileNumber: updateObj.mobileNumber },
+        ],
+        active: true,
+      });
 
-        if (emailExists) {
-          return UtilController.sendSuccess(req, res, next, {
-            message: "Email already exists",
-            responseCode: returnCode.duplicate,
-          });
-        }
-      }
+      // if (existingUser) {
+      //   let messages;
 
-      if (!UtilController.isEmpty(updateObj?.mobileNumber)) {
-        const mobileExists = await User.findOne({
-          mobileNumber: updateObj.mobileNumber,
-          userId: { $ne: userId },
-          active: true,
-        });
+      //   if (existingUser.email === updateObj.email) {
+      //     messages = "Email already exists.";
+      //   }
 
-        if (mobileExists) {
-          return UtilController.sendSuccess(req, res, next, {
-            message: "Mobile number already exists",
-            responseCode: returnCode.duplicate,
-          });
-        }
-      }
+      //   if (existingUser.mobileNumber === updateObj.mobileNumber) {
+      //     messages = "Mobile number already exists.";
+      //   }
+
+      //   return UtilController.sendSuccess(req, res, next, {
+      //     message: messages, // will be an array of strings
+      //     responseCode: returnCode.duplicate,
+      //   });
+      // }
 
       if (!UtilController.isEmpty(updateObj?.password)) {
         const password = updateObj.password;
@@ -264,9 +317,13 @@ module.exports = {
         updateObj["password"] = encryptedPassword;
       }
 
+      updateObj["updatedBy"] = req.user?.userId;
+      updateObj["updatedAt"] = Math.floor(Date.now() / 1000);
+
       const result = await User.findOneAndUpdate(
         { userId: userId },
         { $set: updateObj },
+        { updatedAt: Math.floor(Date.now() / 1000) },
         { new: true }
       );
 

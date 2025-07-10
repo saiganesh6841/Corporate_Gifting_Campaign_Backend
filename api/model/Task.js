@@ -50,6 +50,10 @@ const taskSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "user",
   },
+  updatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "user",
+  },
   active: {
     type: Boolean,
     default: true,

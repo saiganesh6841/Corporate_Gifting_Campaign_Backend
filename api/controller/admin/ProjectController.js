@@ -119,7 +119,7 @@ module.exports = {
             createdAt: Math.floor(Date.now() / 1000),
             updatedAt: Math.floor(Date.now() / 1000),
             rooms: flat.rooms.map((roomId) => ({
-              roomId: UtilController.convertToMongoose(roomId),
+              roomId: UtilController.convertToMongoose(roomId.roomDetails._id),
               roomImages: [],
             })),
           };
@@ -148,6 +148,184 @@ module.exports = {
   },
   updateProject: async (req, res, next) => {
     try {
+      const session = await mongoose.startSession();
+
+      const { ...updateObj } = req.body;
+      console.log("updateObj: ", updateObj);
+      const existingProject = await Project.findOne({
+        projectId: updateObj.projectId,
+      });
+      if (!existingProject) {
+        return UtilController.sendError(req, res, next, {
+          message: "property not found",
+          responseCode: returnCode.invalidSession,
+        });
+      }
+      existingProject.projectName = updateObj.projectName;
+      existingProject.clientName = updateObj.clientName;
+      existingProject.location = updateObj.location;
+      existingProject.companyName = updateObj.companyName;
+      existingProject.startDate = updateObj.startDate;
+      existingProject.endDate = updateObj.endDate;
+      existingProject.clientPhoneNo = updateObj.mobileNumber;
+      existingProject.clientEmail = updateObj.email;
+      existingProject.assignedSupervisor = updateObj.assignedSupervisor;
+      existingProject.assignedWorkers = updateObj.assignedWorkers;
+      existingProject.uploadImage = updateObj.uploadImage;
+      existingProject.status = updateObj.status;
+      existingProject.updatedAt = Math.floor(Date.now() / 1000);
+      existingProject.updatedBy = req.user.userId;
+
+      await existingProject.save();
+
+      const projectObjectId = existingProject._id;
+      console.log("projectObjectId: ", projectObjectId);
+      const existingFloors = await ProjectFloors.find({
+        projectId: projectObjectId,
+      });
+      console.log("existingFloors: ", existingFloors);
+
+      for (const floorDetail of updateObj.details) {
+        console.log("floorDetail: ", floorDetail);
+        let floor = await ProjectFloors.findOne({
+          floorNo: floorDetail.floorNo,
+          projectId: projectObjectId,
+        });
+
+        if (!floor) {
+          const floorTagResult = await Tag.findOneAndUpdate(
+            {
+              tagType: "floor",
+              active: true,
+            },
+            {
+              $inc: { sequenceNo: 1 },
+              updatedAt: Math.floor(Date.now() / 1000),
+            },
+            { session, new: true }
+          );
+          const floorsId =
+            floorTagResult.prefix +
+            UtilController.pad(floorTagResult.sequenceNo, 5);
+          floor = await ProjectFloors.create({
+            floorId: floorsId,
+            floorNo: floorDetail.floorNo,
+            projectId: projectObjectId,
+            createdBy: req.user.userId,
+          });
+        }
+
+        for (const flatDetail of floorDetail.roomDetails) {
+          let flat = await ProjectFlats.findOne({
+            flatNo: flatDetail.flatNo,
+            projectId: projectObjectId,
+            floorId: floor._id,
+          });
+
+          if (!flat) {
+            flat = await ProjectFlats.create({
+              flatNo: flatDetail.flatNo,
+              projectId: projectObjectId,
+              floorId: floor._id,
+              rooms: flatDetail.rooms.map((roomId) => ({
+                roomId: roomId,
+                entries: [],
+              })),
+              createdBy: req.user.userId,
+            });
+          } else {
+            const existingRoomIds = flat.rooms.map((r) => r.roomId?.toString());
+            const newRooms = flatDetail.rooms.filter(
+              (roomId) => !existingRoomIds.includes(roomId)
+            );
+
+            if (newRooms.length > 0) {
+              flat.rooms.push(
+                ...newRooms.map((roomId) => ({ roomId, entries: [] }))
+              );
+              flat.updatedAt = Math.floor(Date.now() / 1000);
+              await flat.save();
+            }
+          }
+        }
+      }
+
+      UtilController.sendSuccess(req, res, next, {
+        message: "Project updated successfully",
+        projectId: existingProject.projectId,
+      });
+    } catch (error) {
+      console.log("error: ", error);
+      UtilController.sendError(req, res, next, error);
+    }
+  },
+
+  deleteFloor: async (req, res, next) => {
+    try {
+      const { floorId, projectId } = req.body;
+
+      const floorObjectId = UtilController.convertToMongoose(floorId);
+      const projectObjectId = UtilController.convertToMongoose(projectId);
+
+      const floor = await ProjectFloors.findOne({
+        _id: floorObjectId,
+        projectId: projectObjectId,
+      });
+
+      if (!floor) {
+        return UtilController.sendError(req, res, next, {
+          message: "Floor not found",
+          responseCode: returnCode.invalidSession,
+        });
+      }
+
+      await ProjectFloors.deleteOne({
+        _id: floorObjectId,
+        projectId: projectObjectId,
+      });
+
+      await ProjectFlats.deleteMany({
+        floorId: floorObjectId,
+        projectId: projectObjectId,
+      });
+
+      UtilController.sendSuccess(req, res, next, {
+        responseCode: returnCode.validSession,
+        message: "Successfully deleted floor and its related flats",
+      });
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
+
+  deleteFalt: async (req, res, next) => {
+    try {
+      const { flatId, projectId } = req.body;
+
+      const flatObjectId = UtilController.convertToMongoose(flatId);
+      const projectObjectId = UtilController.convertToMongoose(projectId);
+
+      const flat = await ProjectFlats.findOne({
+        _id: flatObjectId,
+        projectId: projectObjectId,
+      });
+
+      if (!flat) {
+        return UtilController.sendError(req, res, next, {
+          message: "flat not found",
+          responseCode: returnCode.invalidSession,
+        });
+      }
+
+      await ProjectFlats.deleteOne({
+        _id: flatObjectId,
+        projectId: projectObjectId,
+      });
+
+      UtilController.sendSuccess(req, res, next, {
+        responseCode: returnCode.validSession,
+        message: "Successfully deleted  flats",
+      });
     } catch (error) {
       UtilController.sendError(req, res, next, error);
     }
@@ -263,6 +441,10 @@ module.exports = {
         delete queryObj.active;
       }
 
+      if (!UtilController.isEmpty(filters.status)) {
+        queryObj["status"] = filters.status;
+      }
+
       let sortOrder = {};
 
       sortOrder = {
@@ -292,19 +474,35 @@ module.exports = {
         ];
       }
 
-      if (!UtilController.isEmpty(searchKey)) {
-        queryObj["$or"] = [
-          { projectId: { $regex: searchKey, $options: "i" } },
-          { projectName: { $regex: searchKey, $options: "i" } },
-          { clientName: { $regex: searchKey, $options: "i" } },
-          { location: { $regex: searchKey, $options: "i" } },
-          { status: { $regex: searchKey, $options: "i" } },
-        ];
-      }
+      // if (!UtilController.isEmpty(searchKey)) {
+      //   queryObj["$or"] = [
+      //     { projectId: { $regex: searchKey, $options: "i" } },
+      //     { projectName: { $regex: searchKey, $options: "i" } },
+      //     { clientName: { $regex: searchKey, $options: "i" } },
+      //     { location: { $regex: searchKey, $options: "i" } },
+      //     { status: { $regex: searchKey, $options: "i" } },
+      //   ];
+      // }
 
       const pipeline = [
         {
           $match: queryObj,
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "createdBy",
+            foreignField: "_id",
+            as: "createdByDetails",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "updatedBy",
+            foreignField: "_id",
+            as: "updatedByDetails",
+          },
         },
         {
           $project: {
@@ -317,8 +515,31 @@ module.exports = {
             updatedAt: 1,
             endDate: 1,
             status: 1,
+            createdBy: {
+              $arrayElemAt: ["$createdByDetails.fullName", 0],
+            },
+            updatedBy: {
+              $arrayElemAt: ["$updatedByDetails.fullName", 0],
+            },
           },
         },
+        ...(searchKey
+          ? [
+              {
+                $match: {
+                  $or: [
+                    { projectId: { $regex: searchKey, $options: "i" } },
+                    { projectName: { $regex: searchKey, $options: "i" } },
+                    { clientName: { $regex: searchKey, $options: "i" } },
+                    { location: { $regex: searchKey, $options: "i" } },
+                    { status: { $regex: searchKey, $options: "i" } },
+                    { createdBy: { $regex: searchKey, $options: "i" } },
+                    { updatedBy: { $regex: searchKey, $options: "i" } },
+                  ],
+                },
+              },
+            ]
+          : []),
         { $sort: sortOrder },
         { $skip: page * pageSize },
         { $limit: pageSize },
@@ -369,7 +590,8 @@ module.exports = {
               },
               {
                 $project: {
-                  _id: 1,
+                  _id: 0,
+                  floor_id: "$_id",
                   floorNo: 1,
                   floorId: 1,
                 },
@@ -414,7 +636,7 @@ module.exports = {
                   floorId: { $first: "$floorId" },
                   rooms: {
                     $push: {
-                      _id: "$rooms._id",
+                      // _id: "$rooms._id",
                       roomDetails: "$roomDetails",
                     },
                   },
@@ -448,6 +670,8 @@ module.exports = {
         },
         {
           $project: {
+            proId: "$_id",
+            _id: 0,
             projectId: 1,
             projectName: 1,
             active: 1,
@@ -485,9 +709,12 @@ module.exports = {
       formattedProject.floorDetails = formattedProject.floorDetails.map(
         (floor) => {
           const roomDetails = formattedProject.flatDetails
-            .filter((flat) => flat.floorId.toString() === floor._id.toString())
+            .filter(
+              (flat) => flat.floorId.toString() === floor.floor_id.toString()
+            )
             .map((flat) => ({
               flatNo: flat.flatNo,
+              flat_id: flat._id,
               rooms: flat.rooms,
             }));
 
@@ -980,15 +1207,16 @@ module.exports = {
   deleteImage: async (req, res, next) => {
     try {
       const { entryId, imageUrl } = req.body;
-      if (!entryId || !imageUrl) {
+      if (!entryId || !Array.isArray(imageUrl) || imageUrl.length === 0) {
         return UtilController.sendError(req, res, next, {
-          message: "entryId and imageUrl are required",
-          responseCode: 400,
+          message: "entryId and imageUrl array are required",
+          responseCode: returnCode.invalidSession,
         });
       }
+
       const result = await Entries.updateOne(
         { _id: entryId },
-        { $pull: { roomImages: { url: imageUrl } } }
+        { $pull: { roomImages: { url: { $in: imageUrl } } } }
       );
 
       if (result.modifiedCount === 0) {

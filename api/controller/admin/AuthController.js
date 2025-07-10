@@ -48,6 +48,8 @@ module.exports = {
       );
 
       if (userCode === returnCode.passwordMatched) {
+        console.log("dd", req.sessionID);
+
         systemCache.set(
           req.sessionID,
           user._id,
@@ -59,6 +61,7 @@ module.exports = {
           { active: true, email },
           { $set: { otpExpiresAt: Math.floor(Date.now() / 1000) + 60 } }
         );
+        console.log("OTP sent to user:", user.email);
       } else {
         //update password attempt
         await User.findOneAndUpdate(
@@ -107,6 +110,7 @@ module.exports = {
       let userResult;
 
       const userSes = systemCache.get(req.sessionID);
+      console.log("userSes: ", userSes);
       let user = null;
 
       if (!(typeof userSes === "undefined" || userSes === null)) {
@@ -146,12 +150,12 @@ module.exports = {
 
           const isProduction = process.env.NODE_ENV === "production";
 
-          res.cookie("adminToken", token, {
-            httpOnly: true,
-            secure: isProduction,
-            sameSite: isProduction ? "none" : "strict",
-            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-          });
+          // res.cookie("adminToken", token, {
+          //   httpOnly: true,
+          //   secure: isProduction,
+          //   sameSite: isProduction ? "none" : "strict",
+          //   maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+          // });
 
           req.session.userType = userResult.userType;
           systemCache.del(req.sessionID);
@@ -159,6 +163,7 @@ module.exports = {
           return UtilController.sendSuccess(req, res, next, {
             responseCode: response,
             user: userResult,
+            token: token,
             message: "OTP verified successfully",
           });
         } else {
@@ -260,6 +265,7 @@ module.exports = {
             secure: false,
           });
           res.clearCookie("adminToken");
+          req.user = {};
 
           UtilController.sendSuccess(req, res, next, {
             responseCode: returnCode.validSession,

@@ -90,6 +90,7 @@ module.exports = {
       recordId,
       {
         ...req.body,
+        updatedBy: userId,
         updatedAt: Math.floor(Date.now() / 1000),
       },
       { new: true }
@@ -149,7 +150,7 @@ module.exports = {
       let sortOrder = {};
 
       sortOrder = {
-        createdAt: -1,
+        updatedAt: -1,
       };
 
       let page = 0;
@@ -175,12 +176,6 @@ module.exports = {
         ];
       }
 
-      if (!UtilController.isEmpty(searchKey)) {
-        queryObj["$or"] = [
-          { roomId: { $regex: searchKey, $options: "i" } },
-          { roomName: { $regex: searchKey, $options: "i" } },
-        ];
-      }
       const pipeline = [
         {
           $match: queryObj,
@@ -191,6 +186,14 @@ module.exports = {
             localField: "createdBy",
             foreignField: "_id",
             as: "createdByUser",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "updatedBy",
+            foreignField: "_id",
+            as: "updatedByUser",
           },
         },
         {
@@ -205,8 +208,25 @@ module.exports = {
             createdBy: {
               $arrayElemAt: ["$createdByUser.fullName", 0],
             },
+            updatedBy: {
+              $arrayElemAt: ["$updatedByUser.fullName", 0],
+            },
           },
         },
+        ...(searchKey
+          ? [
+              {
+                $match: {
+                  $or: [
+                    { roomId: { $regex: searchKey, $options: "i" } },
+                    { roomName: { $regex: searchKey, $options: "i" } },
+                    { createdBy: { $regex: searchKey, $options: "i" } },
+                    { updatedBy: { $regex: searchKey, $options: "i" } },
+                  ],
+                },
+              },
+            ]
+          : []),
         { $sort: sortOrder },
         { $skip: page * pageSize },
         { $limit: pageSize },

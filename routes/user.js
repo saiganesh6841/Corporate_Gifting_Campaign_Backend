@@ -17,7 +17,7 @@ router.route("/logout").get(UserController.logout);
 // user routes
 router.route("/profile").get(userAuth, UserController.userProfile);
 
-// project routes
+// project routes 
 // router
 //   .route("/project/list/pending")
 //   .get(userAuth, ProjectController.queryAllPendingProjects);

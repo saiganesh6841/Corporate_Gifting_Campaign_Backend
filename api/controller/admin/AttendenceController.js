@@ -6,9 +6,11 @@ module.exports = {
   listAttendence: async (req, res, next) => {
     try {
       const { ...filters } = req.body;
+      
       let queryObj = {
         active: filters.active ?? true,
       };
+      
       if (filters.active === "All") {
         delete queryObj.active;
       }
@@ -64,8 +66,9 @@ module.exports = {
             attendanceDate: 1,
             workHours: "$totalDuration",
             checkIn: 1,
+            createdAt: 1,
             checkOut: 1,
-            status: "",
+            status: 1,
           },
         },
         {
@@ -80,8 +83,10 @@ module.exports = {
         { $skip: page * pageSize },
         { $limit: pageSize },
       ];
+
       const result = await Attendance.aggregate(pipeline);
       let pageCount = await Attendance.countDocuments(queryObj);
+
       UtilController.sendSuccess(req, res, next, {
         rows: result,
         message: "Attendence listed",

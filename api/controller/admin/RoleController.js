@@ -51,7 +51,7 @@ module.exports = {
       let sortOrder = {};
 
       sortOrder = {
-        createdAt: -1,
+        updatedAt: -1,
       };
 
       let page = 0;
@@ -77,10 +77,6 @@ module.exports = {
         ];
       }
 
-      if (!UtilController.isEmpty(searchKey)) {
-        queryObj["$or"] = [{ name: { $regex: searchKey, $options: "i" } }];
-      }
-
       const pipeline = [
         {
           $match: queryObj,
@@ -91,6 +87,14 @@ module.exports = {
             localField: "createdBy",
             foreignField: "_id",
             as: "createdByUser",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "updatedBy",
+            foreignField: "_id",
+            as: "updatedByUser",
           },
         },
         {
@@ -106,8 +110,24 @@ module.exports = {
             createdByUser: {
               $arrayElemAt: ["$createdByUser.fullName", 0],
             },
+            updatedByUser: {
+              $arrayElemAt: ["$updatedByUser.fullName", 0],
+            },
           },
         },
+        ...(searchKey
+          ? [
+              {
+                $match: {
+                  $or: [
+                    { name: { $regex: searchKey, $options: "i" } },
+                    { createdByUser: { $regex: searchKey, $options: "i" } },
+                    { updatedByUser: { $regex: searchKey, $options: "i" } },
+                  ],
+                },
+              },
+            ]
+          : []),
         { $sort: sortOrder },
         { $skip: page * pageSize },
         { $limit: pageSize },
@@ -158,16 +178,36 @@ module.exports = {
   },
   updateRole: async (req, res, next) => {
     try {
-      const { recordId, ...updateObj } = req.body;
-      if (!recordId) {
+      const { roleId, name, ...updateObj } = req.body;
+      if (!roleId) {
         return UtilController.sendError(req, res, next, {
           message: "Role ID is required",
           responseCode: returnCode.invalidRequest,
         });
       }
 
+      // 🔍 Check if another role with the same name exists (excluding the one being updated)
+      if (name) {
+        const existingRole = await Role.findOne({
+          _id: { $ne: roleId },
+          name: name,
+        });
+
+        if (existingRole) {
+          return UtilController.sendSuccess(req, res, next, {
+            message: "A role with the same name already exists",
+            responseCode: returnCode.duplicate,
+          });
+        }
+
+        updateObj.name = name;
+      }
+
+      updateObj.updatedAt = Math.floor(new Date() / 1000);
+      updateObj.updatedBy = req.user.userId;
+
       const role = await Role.findByIdAndUpdate(
-        recordId,
+        roleId,
         { $set: updateObj },
         { new: true }
       ).lean();

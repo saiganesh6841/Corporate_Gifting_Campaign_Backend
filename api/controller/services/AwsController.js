@@ -7,13 +7,14 @@ AWS.config.update({
   accessKeyId: awsConfig.aws.accessKeyId,
   region: awsConfig.aws.region,
 });
+const fs = require("fs");
 
 module.exports = {
   upload2AWS: async function (path, bucket, fileName, contentType) {
     try {
       var s3 = new AWS.S3();
       var fsData = fs.readFileSync(path);
-      params = {
+      const params = {
         ACL: "public-read", // public-read / authenticated-read
         Bucket: bucket,
         Key: fileName,

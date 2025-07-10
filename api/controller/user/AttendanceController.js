@@ -5,6 +5,7 @@ module.exports = {
   checkIn: async (req, res, next) => {
     try {
       const { userId } = req.user;
+
       if (!userId) {
         return UtilController.sendError(req, res, next, {
           message: "User not found",
@@ -12,11 +13,15 @@ module.exports = {
         });
       }
 
-      const currentDate = await UtilController.convertTOISOFormat();
+      const currentDate = UtilController.convertTOISOFormat();
+      const currentTimestamp = Math.floor(Date.now() / 1000);
+      console.log("currentTimestamp: ", currentTimestamp);
 
       const createObj = {
-        userId: await UtilController.convertToMongoose(userId),
+        userId: UtilController.convertToMongoose(userId),
         attendanceDate: currentDate,
+        checkIn: currentTimestamp,
+        status: "inwork",
       };
 
       // check already on same day attendance been created
@@ -37,7 +42,8 @@ module.exports = {
         result,
       });
     } catch (error) {
-      UtilController.sendError(req, res, next, err);
+      console.log("error: ", error);
+      UtilController.sendError(req, res, next, error);
     }
   },
 
@@ -51,11 +57,11 @@ module.exports = {
         });
       }
 
-      const currentDate = await UtilController.convertTOISOFormat();
+      const currentDate = UtilController.convertTOISOFormat();
       //   const currentDate = "2025-05-24";
 
       const updateObj = {
-        userId: await UtilController.convertToMongoose(userId),
+        userId: UtilController.convertToMongoose(userId),
         attendanceDate: currentDate,
         checkOut: null,
       };
@@ -77,17 +83,22 @@ module.exports = {
 
       const formattedDuration = `${hours}h ${minutes}m`;
 
+      const status =
+        UtilController.calculateAttendanceStatus(totalDuration);
+
       const result = await Attendance.findOneAndUpdate(
         updateObj,
         {
           checkOut,
-          totalDuration: formattedDuration || 0,
+          totalDuration: formattedDuration || "0h 0m",
+          status,
         },
         {
           new: true,
         }
       );
       UtilController.sendSuccess(req, res, next, {
+        message: "Successfully checked out",
         responseCode: returnCode.validSession,
         result,
       });
