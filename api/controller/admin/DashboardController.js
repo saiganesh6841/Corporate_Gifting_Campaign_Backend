@@ -150,9 +150,9 @@ module.exports = {
               cancelled: {
                 $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] },
               },
-              pending: {
-                $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] },
-              },
+              // pending: {
+              //   $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] },
+              // },
             },
           },
           {
@@ -162,7 +162,7 @@ module.exports = {
               completedProject: 1,
               inProgress: 1,
               cancelled: 1,
-              pending: 1,
+              // pending: 1,
             },
           },
           { $sort: { year: 1, month: 1, day: 1, week: 1 } },
@@ -238,7 +238,7 @@ module.exports = {
                 },
               },
               pendingTask: {
-                $sum: { $cond: [{ $eq: ["$taskStatus", "pending"] }, 1, 0] },
+                $sum: { $cond: [{ $eq: ["$taskStatus", "inprogress"] }, 1, 0] },
               },
             },
           },

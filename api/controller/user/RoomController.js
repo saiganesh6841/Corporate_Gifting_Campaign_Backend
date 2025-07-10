@@ -28,7 +28,7 @@ module.exports = {
       const matchFilter = {
         flatNo: flatObjectId,
         room: roomObjectId,
-        taskStatus: status || "pending",
+        taskStatus: status || "inprogress",
         workerId: userObjectId,
       };
 
