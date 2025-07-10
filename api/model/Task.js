@@ -18,7 +18,7 @@ const taskSchema = new mongoose.Schema({
     ref: "Project",
   },
   floorNo: {
-    type: mongoose.Schema.Types.ObjectId, 
+    type: mongoose.Schema.Types.ObjectId,
     ref: "ProjectFloors",
   },
   flatNo: {
@@ -35,8 +35,8 @@ const taskSchema = new mongoose.Schema({
   },
   taskStatus: {
     type: String,
-    enum: ["pending", "in-progress", "completed"],
-    default: "pending",
+    enum: ["inprogress", "completed"],
+    default: "inprogress",
   },
   updatedAt: {
     type: Number,

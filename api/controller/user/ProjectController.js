@@ -42,7 +42,10 @@ module.exports = {
           {
             $facet: {
               all: [{ $count: "assigned" }],
-              pending: [{ $match: { status: "pending" } }, { $count: "count" }],
+              inprogress: [
+                { $match: { status: "inprogress" } },
+                { $count: "count" },
+              ],
               completed: [
                 { $match: { status: "completed" } },
                 { $count: "count" },
@@ -54,8 +57,8 @@ module.exports = {
               assigned: {
                 $ifNull: [{ $arrayElemAt: ["$all.assigned", 0] }, 0],
               },
-              pending: {
-                $ifNull: [{ $arrayElemAt: ["$pending.count", 0] }, 0],
+              inprogress: {
+                $ifNull: [{ $arrayElemAt: ["$inprogress.count", 0] }, 0],
               },
               completed: {
                 $ifNull: [{ $arrayElemAt: ["$completed.count", 0] }, 0],
@@ -84,7 +87,7 @@ module.exports = {
 
       const projectCounts = projectResult[0] || {
         assigned: 0,
-        pending: 0,
+        inprogress: 0,
         completed: 0,
       };
 
