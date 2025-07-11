@@ -5,8 +5,8 @@ const floorSchema = mongoose.Schema({
     default: "",
   },
   floorNo: {
-    type: Number,
-    default: 0,
+    type: String,
+    default: "",
   },
   projectId: {
     type: mongoose.Schema.ObjectId,

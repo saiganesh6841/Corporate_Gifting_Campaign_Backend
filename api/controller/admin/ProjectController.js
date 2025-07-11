@@ -9,6 +9,7 @@ const ProjectFloors = require("../../model/ProjectFloors");
 const Chat = require("../../model/Chat");
 const User = require("../../model/User");
 const Entries = require("../../model/Entries");
+const Task = require("../../model/Task");
 
 module.exports = {
   createProject: async (req, res, next) => {
@@ -922,6 +923,11 @@ module.exports = {
 
       await Project.updateMany(
         { _id: { $in: projectIds } },
+        { $set: { active: false } }
+      );
+
+      await Task.updateMany(
+        { projectId: { $in: projectIds } },
         { $set: { active: false } }
       );
 
