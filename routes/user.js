@@ -58,8 +58,8 @@ router
   .get(userAuth, AttendanceController.queryAllCheckins);
 
 // Task routes
-
 router.route("/task/list").get(userAuth, TaskController.queryTasks);
+router.route("/task/list/all").post(userAuth, TaskController.getAllTasksInProjects)
 
 // room routes
 router.route("/room/tasks/list").post(userAuth, RoomController.taskDetails);
