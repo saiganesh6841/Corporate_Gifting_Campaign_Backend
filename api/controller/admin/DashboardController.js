@@ -265,4 +265,67 @@ module.exports = {
       UtilController.sendError(req, res, next, error);
     }
   },
+
+  dashboardProject: async (req, res, next) => {
+    try {
+      const { startDate, endDate, status } = req.query;
+      const matchFilter = { active: true };
+      if (status) {
+        matchFilter.status = status;
+      }
+      if (startDate && endDate) {
+        matchFilter.startDate = { $gte: Number(startDate) };
+        matchFilter.endDate = { $lte: Number(endDate) };
+      } else if (startDate) {
+        matchFilter.startDate = { $gte: Number(startDate) };
+      } else if (endDate) {
+        matchFilter.endDate = { $lte: Number(endDate) };
+      }
+
+      const result = await Project.aggregate([
+        { $match: matchFilter },
+        {
+          $lookup: {
+            from: "tasks",
+            localField: "_id",
+            foreignField: "projectId",
+            as: "tasks",
+          },
+        },
+
+        {
+          $addFields: {
+            tasks: {
+              $size: {
+                $filter: {
+                  input: "$tasks",
+                  as: "task",
+                  cond: { $eq: ["$$task.active", true] },
+                },
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            uploadImage: 1,
+            assignedWorkers: 1,
+            tasks: 1,
+            createdAt: 1,
+            startDate: 1,
+            endDate: 1,
+            projectName: 1,
+            location: 1,
+            status: 1,
+          },
+        },
+      ]);
+      return UtilController.sendSuccess(req, res, next, {
+        result,
+        responseCode: returnCode.validSession,
+      });
+    } catch (error) {
+      UtilController.sendError(req, res, next, error);
+    }
+  },
 };

@@ -115,5 +115,6 @@ router.route("/dropdown/workers").post(DropdownContorller.getWorkers);
 // dashboard routes
 router.route("/dashboard/count").post(DashboardController.dashboardCount);
 router.route("/dashboard/graph").get(DashboardController.dashboardGraph);
+router.route("/dashboard/projects").get(DashboardController.dashboardProject)
 
 module.exports = router;
