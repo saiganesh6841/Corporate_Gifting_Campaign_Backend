@@ -16,7 +16,6 @@ module.exports = {
           responseCode: returnCode.invalidSession,
         });
       }
-      
 
       const { flatId, roomId, status } = req.body;
 
@@ -157,7 +156,9 @@ module.exports = {
       if (existingEntry) {
         // Update the existing entry
         existingEntry.roomImages = imageUrls;
-        existingEntry.notes = notes;
+        if (notes.length > 0) {
+          existingEntry.notes = notes;
+        }
         existingEntry.workerId = userId;
         existingEntry.createdAt = Math.floor(Date.now() / 1000);
         existingEntry.isTask = true;
@@ -165,16 +166,20 @@ module.exports = {
         await existingEntry.save();
       } else {
         // Create a new entry
+
         newEntry = new Entry({
           flatId: taskResult.flatNo,
           roomId: taskResult.room,
           taskId: taskId,
           roomImages: imageUrls,
-          notes: notes,
           workerId: userId,
           isTask: true,
           createdAt: Math.floor(Date.now() / 1000),
         });
+
+        if (notes.length > 0) {
+          newEntry.notes = notes;
+        }
         await newEntry.save();
         await Flat.findOneAndUpdate(
           {
