@@ -196,15 +196,20 @@ module.exports = {
       //   update the chat with the entry id
       let entryId = existingEntry ? existingEntry._id : newEntry._id;
 
+      const updateObj = {
+        isAdminCreated: false,
+        userId: userId,
+      };
+
+      if (notes.length > 0) {
+        updateObj.message = notes;
+      }
+
       await Chat.findOneAndUpdate(
         { entryId: entryId },
         {
           $set: {
-            chats: {
-              message: notes,
-              isAdminCreated: false,
-              userId: userId,
-            },
+            chats: { updateObj },
           },
           $setOnInsert: {
             createdBy: userId,

@@ -180,9 +180,6 @@ module.exports = {
           }
         );
 
-        console.log(
-          `User ${record.userId} auto-checked out at 6:30 PM with duration ${formattedDuration}`
-        );
       }
 
       console.log("✅ Auto checkout complete.");

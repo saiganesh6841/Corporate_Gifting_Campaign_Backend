@@ -286,12 +286,15 @@ module.exports = {
         flatId: flatObjectId,
         roomId: roomObjectId,
         roomImages: imageUrls,
-        notes: notes,
         workerId: userId,
         isTask: false,
         uploadId: uploadId,
         createdAt: Math.floor(Date.now() / 1000),
       });
+
+      if(notes?.length > 0){
+        newEntry.notes = notes
+      }
 
       await newEntry.save();
 
@@ -309,15 +312,20 @@ module.exports = {
 
       // create a chat using the entry id
 
+       const updateObj = {
+        isAdminCreated: false,
+        userId: userId,
+      };
+
+      if (notes.length > 0) {
+        updateObj.message = notes;
+      }
+
       await Chat.findOneAndUpdate(
         { entryId: newEntry._id },
         {
           $set: {
-            chats: {
-              message: notes,
-              isAdminCreated: false,
-              userId: userId,
-            },
+            chats: {updateObj},
           },
           $setOnInsert: {
             createdBy: userId,
