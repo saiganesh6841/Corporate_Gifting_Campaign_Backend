@@ -325,7 +325,7 @@ module.exports = {
         { entryId: newEntry._id },
         {
           $set: {
-            chats: {updateObj},
+            chats: updateObj,
           },
           $setOnInsert: {
             createdBy: userId,
