@@ -9,6 +9,8 @@ const user = require("./routes/user");
 const admin = require("./routes/admin");
 const AuthController = require("./api/controller/services/AuthController");
 require("dotenv").config();
+const cron = require("node-cron");
+const AttendanceController = require("./api/controller/user/AttendanceController");
 
 var app = express();
 
@@ -30,6 +32,15 @@ if (!(connectionUrl === undefined || connectionUrl?.length <= 0)) {
     console.error(err);
   });
 }
+
+// cron job for auto checkout
+// cron.schedule("30 18 * * *", AttendanceController.checkoutAllUsers, {
+//   timezone: "Asia/Kolkata",
+// });
+
+cron.schedule("40 10 * * *", AttendanceController.checkoutAllUsers, {
+  timezone: "Asia/Kolkata",
+});
 
 app.use(
   cors({

@@ -83,8 +83,7 @@ module.exports = {
 
       const formattedDuration = `${hours}h ${minutes}m`;
 
-      const status =
-        UtilController.calculateAttendanceStatus(totalDuration);
+      const status = UtilController.calculateAttendanceStatus(totalDuration);
 
       const result = await Attendance.findOneAndUpdate(
         updateObj,
@@ -144,6 +143,52 @@ module.exports = {
       });
     } catch (error) {
       return UtilController.sendError(req, res, next, error);
+    }
+  },
+
+  checkoutAllUsers: async (req, res, next) => {
+    try {
+      const currentDate = UtilController.convertTOISOFormat();
+
+      // Step 1: Get all checked-in users who haven’t checked out yet
+      const usersToCheckOut = await Attendance.find({
+        attendanceDate: currentDate,
+        checkOut: null,
+      });
+
+      for (const record of usersToCheckOut) {
+        const checkOut = Math.floor(Date.now() / 1000);
+        const totalDuration = checkOut - record.checkIn;
+
+        const hours = Math.floor(totalDuration / 3600);
+        const minutes = Math.floor((totalDuration % 3600) / 60);
+        const formattedDuration = `${hours}h ${minutes}m`;
+
+        const status = UtilController.calculateAttendanceStatus(totalDuration);
+
+        // Step 2: Update each attendance record
+        await Attendance.findOneAndUpdate(
+          {
+            userId: record.userId,
+            attendanceDate: currentDate,
+            checkOut: null,
+          },
+          {
+            checkOut,
+            totalDuration: formattedDuration,
+            status,
+          }
+        );
+
+        console.log(
+          `User ${record.userId} auto-checked out at 6:30 PM with duration ${formattedDuration}`
+        );
+      }
+
+      console.log("✅ Auto checkout complete.");
+    } catch (error) {
+      console.log("error", error);
+      UtilController.sendError(req, res, next, error);
     }
   },
 };
