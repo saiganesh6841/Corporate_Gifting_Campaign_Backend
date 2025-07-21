@@ -38,7 +38,7 @@ if (!(connectionUrl === undefined || connectionUrl?.length <= 0)) {
 //   timezone: "Asia/Kolkata",
 // });
 
-cron.schedule("40 10 * * *", AttendanceController.checkoutAllUsers, {
+cron.schedule("05 11 * * *", AttendanceController.checkoutAllUsers, {
   timezone: "Asia/Kolkata",
 });
 
