@@ -26,6 +26,84 @@ module.exports = {
         },
       ],
     },
+    // {
+    //   label: "Teacher",
+    //   enable: true,
+    //   buttons: [
+    //     {
+    //       label: "view",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "add",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "edit",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "delete",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "query",
+    //       enable: true,
+    //     },
+    //   ],
+    // },
+    {
+      label: "Student",
+      enable: true,
+      buttons: [
+        {
+          label: "view",
+          enable: true,
+        },
+        {
+          label: "add",
+          enable: true,
+        },
+        {
+          label: "edit",
+          enable: true,
+        },
+        {
+          label: "delete",
+          enable: true,
+        },
+        {
+          label: "query",
+          enable: true,
+        },
+      ],
+    },
+    {
+      label: "School",
+      enable: true,
+      buttons: [
+        {
+          label: "view",
+          enable: true,
+        },
+        {
+          label: "add",
+          enable: true,
+        },
+        {
+          label: "edit",
+          enable: true,
+        },
+        {
+          label: "delete",
+          enable: true,
+        },
+        {
+          label: "query",
+          enable: true,
+        },
+      ],
+    },
     {
       label: "Users",
       enable: true,
@@ -57,7 +135,7 @@ module.exports = {
       ],
     },
     {
-      label: "Projects",
+      label: "Ngo",
       enable: true,
       buttons: [
         {
@@ -80,14 +158,10 @@ module.exports = {
           label: "query",
           enable: true,
         },
-        {
-          label: "export",
-          enable: true,
-        },
       ],
     },
     {
-      label: "Task",
+      label: "Class",
       enable: true,
       buttons: [
         {
@@ -110,26 +184,160 @@ module.exports = {
           label: "query",
           enable: true,
         },
+      ],
+    },
+    {
+      label: "Academic",
+      enable: true,
+      buttons: [
         {
-          label: "export",
+          label: "view",
+          enable: true,
+        },
+        {
+          label: "add",
+          enable: true,
+        },
+        {
+          label: "edit",
+          enable: true,
+        },
+        {
+          label: "delete",
+          enable: true,
+        },
+        {
+          label: "query",
           enable: true,
         },
       ],
     },
     {
-      label: "Attendence",
+      label: "Subject",
       enable: true,
       buttons: [
+        {
+          label: "view",
+          enable: true,
+        },
+        {
+          label: "add",
+          enable: true,
+        },
+        {
+          label: "edit",
+          enable: true,
+        },
+        {
+          label: "delete",
+          enable: true,
+        },
         {
           label: "query",
           enable: true,
         },
-        {
-          label: "export",
-          enable: true,
-        },
       ],
     },
+    // {
+    //   label: "My School",
+    //   enable: true,
+    //   buttons: [
+    //     {
+    //       label: "view",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "add",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "edit",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "delete",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "query",
+    //       enable: true,
+    //     },
+    //   ],
+    // },
+    // {
+    //   label: "Projects",
+    //   enable: true,
+    //   buttons: [
+    //     {
+    //       label: "view",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "add",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "edit",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "delete",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "query",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "export",
+    //       enable: true,
+    //     },
+    //   ],
+    // },
+    // {
+    //   label: "Task",
+    //   enable: true,
+    //   buttons: [
+    //     {
+    //       label: "view",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "add",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "edit",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "delete",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "query",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "export",
+    //       enable: true,
+    //     },
+    //   ],
+    // },
+    // {
+    //   label: "Attendence",
+    //   enable: true,
+    //   buttons: [
+    //     {
+    //       label: "query",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "export",
+    //       enable: true,
+    //     },
+    //   ],
+    // },
     {
       label: "Role",
       enable: true,
@@ -212,46 +420,46 @@ module.exports = {
     //     },
     //   ],
     // },
-    {
-      label: "Room",
-      enable: true,
-      buttons: [
-        {
-          label: "view",
-          enable: true,
-        },
-        {
-          label: "add",
-          enable: true,
-        },
-        {
-          label: "edit",
-          enable: true,
-        },
-        {
-          label: "delete",
-          enable: true,
-        },
-        {
-          label: "query",
-          enable: true,
-        },
-        {
-          label: "export",
-          enable: true,
-        },
-      ],
-    },
-    {
-      label: "Progress Timeline",
-      enable: true,
-      buttons: [],
-    },
+    // {
+    //   label: "Room",
+    //   enable: true,
+    //   buttons: [
+    //     {
+    //       label: "view",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "add",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "edit",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "delete",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "query",
+    //       enable: true,
+    //     },
+    //     {
+    //       label: "export",
+    //       enable: true,
+    //     },
+    //   ],
+    // },
+    // {
+    //   label: "Progress Timeline",
+    //   enable: true,
+    //   buttons: [],
+    // },
 
-    {
-      label: "Security",
-      enable: true,
-      buttons: [],
-    },
+    // {
+    //   label: "Security",
+    //   enable: true,
+    //   buttons: [],
+    // },
   ],
 };
