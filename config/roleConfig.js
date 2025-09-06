@@ -333,6 +333,10 @@ module.exports = {
           enable: true,
         },
         {
+          label: "view",
+          enable: true,
+        },
+        {
           label: "export",
           enable: true,
         },
