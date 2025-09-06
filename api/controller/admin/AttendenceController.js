@@ -113,109 +113,100 @@ module.exports = {
         });
       }
 
-      if (!date) {
-        date = Math.floor(Date.now() / 1000);
-      }
+      if (!date) date = Math.floor(Date.now() / 1000);
 
       const givenDate = new Date(date * 1000);
+      const today = new Date();
 
-      // present and absent logic
-
-      const currenMonthStart = new Date(
+      // Month start & end date logic
+      const monthStart = new Date(
         givenDate.getFullYear(),
         givenDate.getMonth(),
         1
-      )
-        .toISOString()
-        .split("T")[0];
+      );
 
-      const today = new Date();
-      const todayStr = today.toISOString().split("T")[0];
-      let userObjectId = await UtilController.convertToMongoose(userId);
+      const isCurrentMonth =
+        givenDate.getFullYear() === today.getFullYear() &&
+        givenDate.getMonth() === today.getMonth();
 
-      const currentMonthMatchObj = {
+      const monthEnd = isCurrentMonth
+        ? today
+        : new Date(givenDate.getFullYear(), givenDate.getMonth() + 1, 0);
+
+      const userObjectId = await UtilController.convertToMongoose(userId);
+
+      // Attendance for current month
+      const currentMonthMatch = {
         userId: userObjectId,
         active: true,
         attendanceDate: {
-          $gte: currenMonthStart,
-          $lte: todayStr,
+          $gte: monthStart.toISOString().split("T")[0],
+          $lte: monthEnd.toISOString().split("T")[0],
         },
       };
 
-      let currentMonthPipeline = [
-        {
-          $match: currentMonthMatchObj,
-        },
-      ];
+      const [currentMonthStats] = await Attendance.aggregate([
+        { $match: currentMonthMatch },
+        { $count: "present" },
+      ]);
 
-      const currentMonthData = await Attendance.aggregate(currentMonthPipeline);
-      const totalDaysTillToday = today.getDate();
+      const present = currentMonthStats?.present || 0;
+      const totalDays = isCurrentMonth ? today.getDate() : monthEnd.getDate();
+      const absents = totalDays - present;
 
-      let present = currentMonthData.length;
-      let absents = Math.abs(present - totalDaysTillToday);
-
-      //  previous month to current date data logic
-
+      // Previous month attendance
       const previousMonthStart = new Date(
         givenDate.getFullYear(),
         givenDate.getMonth() - 1,
         1
       );
 
-      const previousMonthStartStr = previousMonthStart
-        .toISOString()
-        .split("T")[0];
-
-      let matchObj = {
+      const previousMonthMatch = {
         userId: userObjectId,
         active: true,
         attendanceDate: {
-          $gte: previousMonthStartStr,
-          $lte: todayStr,
+          $gte: previousMonthStart.toISOString().split("T")[0],
+          $lte: today.toISOString().split("T")[0],
         },
       };
 
-      let pipeline = [
-        {
-          $match: matchObj,
-        },
-      ];
-      let result = await Attendance.aggregate(pipeline);
+      const previousMonthData = await Attendance.aggregate([
+        { $match: previousMonthMatch },
+      ]);
 
-      // user details 
+      //Fetch user details (in parallel)
+      const [userDetails] = await Promise.all([
+        User.findById(userObjectId).select(
+          "fullName email userType userId mobileNumber profileImage"
+        ),
+      ]);
 
-      const userDetails = await User.findById(userObjectId).select(
-        "fullName email userType userId mobileNumber profileImage"
-      );
-
-      // hoildays logic
-
-      const year = givenDate.getFullYear();
+      //Sundays (for whole year of givenDate)
       const sundays = [];
+      let currentDate = new Date(givenDate.getFullYear(), 0, 1);
 
-      let currentDate = new Date(year, 0, 1);
-
-      while (currentDate.getFullYear() === year) {
+      while (currentDate.getFullYear() === givenDate.getFullYear()) {
         if (currentDate.getDay() === 0) {
           sundays.push({
-            date: currentDate / 1000,
+            date: Math.floor(currentDate.getTime() / 1000),
             holidayName: "Sunday",
           });
         }
         currentDate.setDate(currentDate.getDate() + 1);
       }
 
+      // --- Response ---
       UtilController.sendSuccess(req, res, next, {
         message: "Successfully fetched attendance details",
         responseCode: returnCode.validSession,
-        result,
+        result: previousMonthData,
         userDetails,
         publicHolidays: sundays,
         present,
         absents,
       });
     } catch (error) {
-      console.log("error: ", error);
+      console.error("error: ", error);
       UtilController.sendError(req, res, next, error);
     }
   },
