@@ -34,7 +34,7 @@ if (!(connectionUrl === undefined || connectionUrl?.length <= 0)) {
 }
 
 // cron job for auto checkout
-cron.schedule("* * * * *", AttendanceController.checkoutAllUsers, {
+cron.schedule("0 0 * * *", AttendanceController.checkoutAllUsers, {
   timezone: "Asia/Kolkata",
 });
 

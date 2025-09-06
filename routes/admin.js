@@ -4,7 +4,7 @@ const UserController = require("../api/controller/admin/UserController");
 const ProjectController = require("../api/controller/admin/ProjectController");
 const AuthController = require("../api/controller/admin/AuthController");
 const RoleController = require("../api/controller/admin/RoleController");
-const RoomController = require("../api/controller/admin/RoomController"); 
+const RoomController = require("../api/controller/admin/RoomController");
 const { adminAuth } = require("../middleware/adminAuth");
 const TaskController = require("../api/controller/admin/TaskController");
 const AwsController = require("../api/controller/admin/AwsController");
@@ -91,6 +91,9 @@ router.route("/role/delete").post(RoleController.deleteRole);
 
 // attendence
 router.route("/attendence/list").post(AttendenceController.listAttendence);
+router
+  .route("/attendence/details")
+  .post(AttendenceController.attendanceDetails);
 
 // schedule timing routes
 // router
@@ -115,6 +118,6 @@ router.route("/dropdown/workers").post(DropdownContorller.getWorkers);
 // dashboard routes
 router.route("/dashboard/count").post(DashboardController.dashboardCount);
 router.route("/dashboard/graph").get(DashboardController.dashboardGraph);
-router.route("/dashboard/projects").get(DashboardController.dashboardProject)
+router.route("/dashboard/projects").get(DashboardController.dashboardProject);
 
 module.exports = router;
