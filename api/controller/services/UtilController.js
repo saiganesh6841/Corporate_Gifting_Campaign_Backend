@@ -228,7 +228,12 @@ module.exports = {
     };
   },
 
-  convertTOISOFormat: () => new Date().toISOString().split("T")[0],
+  convertTOISOFormat: () => {
+    const date = new Date();
+    const isoDate = date.toISOString().split("T")[0];
+    const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
+    return { isoDate, dayName };
+  },
 
   convertToDateFormat: (timestampInSeconds) => {
     const date = new Date(timestampInSeconds * 1000);
@@ -280,5 +285,15 @@ module.exports = {
     if (durationSeconds === nineHours) return "present";
     if (durationSeconds < nineHours) return "earlyLeave";
     return "inwork";
+  },
+
+  calculateAttendanceCheckinStatus: (timestamp) => {
+    const nineAM = new Date();
+    nineAM.setHours(9, 0, 0, 0);
+    const nineAMTimestamp = nineAM.getTime() / 1000;
+
+    if (timestamp > nineAMTimestamp) return "late";
+    if (timestamp < nineAMTimestamp) return "early";
+    if (timestamp === nineAMTimestamp) return "present";
   },
 };

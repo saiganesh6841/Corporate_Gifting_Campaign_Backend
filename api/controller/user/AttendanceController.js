@@ -13,19 +13,21 @@ module.exports = {
         });
       }
 
-      const currentDate = UtilController.convertTOISOFormat();
+      const { isoDate, dayName } = await UtilController.convertTOISOFormat();
       const currentTimestamp = Math.floor(Date.now() / 1000);
-      console.log("currentTimestamp: ", currentTimestamp);
+
+      const status = await UtilController.calculateAttendanceCheckinStatus(
+        currentTimestamp
+      );
 
       const createObj = {
         userId: UtilController.convertToMongoose(userId),
-        attendanceDate: currentDate,
-        checkIn: currentTimestamp,
-        status: "inwork",
+        attendanceDate: isoDate,
       };
 
       // check already on same day attendance been created
-      const attendance = await Attendance.findOne(createObj).lean();
+      const attendance = await Attendance.findOne(createObj);
+      console.log(attendance, "attendance");
 
       if (attendance) {
         return UtilController.sendError(req, res, next, {
@@ -33,6 +35,10 @@ module.exports = {
           responseCode: returnCode.validationError,
         });
       }
+
+      createObj.checkIn = currentTimestamp;
+      createObj.status = status;
+      createObj.dayName = dayName;
 
       const result = await Attendance.create(createObj);
 
@@ -57,17 +63,18 @@ module.exports = {
         });
       }
 
-      const currentDate = UtilController.convertTOISOFormat();
+      const { isoDate } = await UtilController.convertTOISOFormat();
       //   const currentDate = "2025-05-24";
 
       const updateObj = {
         userId: UtilController.convertToMongoose(userId),
-        attendanceDate: currentDate,
+        attendanceDate: isoDate,
         checkOut: null,
       };
 
       //   check if user is checked in
       const attendanceCount = await Attendance.findOne(updateObj).lean();
+      console.log(attendanceCount);
 
       if (!attendanceCount) {
         return UtilController.sendError(req, res, next, {
@@ -118,41 +125,72 @@ module.exports = {
         });
       }
 
-      let query = { userId, active: true };
-
-      if (date) {
-        const convertedDate = await UtilController.convertToDateFormat(date);
-        query.attendanceDate = convertedDate;
-
-        const result = await Attendance.findOne(query);
-
+      if (!date) {
         return UtilController.sendSuccess(req, res, next, {
-          message: "Successfully fetched attendance",
-          responseCode: returnCode.validSession,
-          result: [result],
+          message: "Date is required",
+          responseCode: returnCode.invalidSession,
         });
       }
 
-      // If no date provided, return list sorted by latest
+      const givenDate = new Date(date * 1000);
+
+      const previousMonthStart = new Date(
+        givenDate.getFullYear(),
+        givenDate.getMonth() - 1,
+        1
+      );
+      const previousMonthStartStr = previousMonthStart
+        .toISOString()
+        .split("T")[0];
+
+      const today = new Date();
+      const todayStr = today.toISOString().split("T")[0];
+
+      let query = {
+        userId,
+        active: true,
+        attendanceDate: {
+          $gte: previousMonthStartStr,
+          $lte: todayStr,
+        },
+      };
+
       const result = await Attendance.find(query).sort({ createdAt: -1 });
 
+      const year = givenDate.getFullYear();
+      const sundays = [];
+
+      let currentDate = new Date(year, 0, 1);
+
+      while (currentDate.getFullYear() === year) {
+        if (currentDate.getDay() === 0) {
+          sundays.push({
+            date: currentDate / 1000,
+            holidayName: "Sunday",
+          });
+        }
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
       return UtilController.sendSuccess(req, res, next, {
-        message: "Successfully fetched all attendance records",
+        message: "Successfully fetched attendance",
         responseCode: returnCode.validSession,
-        result: result,
+        result,
+        publicHolidays: sundays,
       });
     } catch (error) {
+      console.log(error, "adch poyiii");
       return UtilController.sendError(req, res, next, error);
     }
   },
 
   checkoutAllUsers: async (req, res, next) => {
     try {
-      const currentDate = UtilController.convertTOISOFormat();
+      const { isoDate } = UtilController.convertTOISOFormat();
 
       // Step 1: Get all checked-in users who haven’t checked out yet
       const usersToCheckOut = await Attendance.find({
-        attendanceDate: currentDate,
+        attendanceDate: isoDate,
         checkOut: null,
       });
 
@@ -170,7 +208,7 @@ module.exports = {
         await Attendance.findOneAndUpdate(
           {
             userId: record.userId,
-            attendanceDate: currentDate,
+            attendanceDate: isoDate,
             checkOut: null,
           },
           {
@@ -179,7 +217,6 @@ module.exports = {
             status,
           }
         );
-
       }
 
       console.log("✅ Auto checkout complete.");

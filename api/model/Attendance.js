@@ -9,6 +9,10 @@ const AttendanceSchema = mongoose.Schema({
     type: String,
     required: true,
   },
+  dayName: {
+    type: String,
+    default: "",
+  },
   checkIn: {
     type: Number,
     default: () => Math.floor(Date.now() / 1000),
@@ -32,6 +36,9 @@ const AttendanceSchema = mongoose.Schema({
       "present",
       "earlyLeave",
       "overtime",
+      "early",
+      "present",
+      "late",
     ],
     default: "inwork",
   },
