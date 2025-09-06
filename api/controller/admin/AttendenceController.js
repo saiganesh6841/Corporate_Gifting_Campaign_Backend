@@ -119,18 +119,52 @@ module.exports = {
 
       const givenDate = new Date(date * 1000);
 
-      const previousMonthStart = new Date(
+      // present and absent logic
+
+      const currenMonthStart = new Date(
         givenDate.getFullYear(),
-        givenDate.getMonth() - 1,
+        givenDate.getMonth(),
         1
-      );
-      const previousMonthStartStr = previousMonthStart
+      )
         .toISOString()
         .split("T")[0];
 
       const today = new Date();
       const todayStr = today.toISOString().split("T")[0];
       let userObjectId = await UtilController.convertToMongoose(userId);
+
+      const currentMonthMatchObj = {
+        userId: userObjectId,
+        active: true,
+        attendanceDate: {
+          $gte: currenMonthStart,
+          $lte: todayStr,
+        },
+      };
+
+      let currentMonthPipeline = [
+        {
+          $match: currentMonthMatchObj,
+        },
+      ];
+
+      const currentMonthData = await Attendance.aggregate(currentMonthPipeline);
+      const totalDaysTillToday = today.getDate();
+
+      let present = currentMonthData.length;
+      let absents = Math.abs(present - totalDaysTillToday);
+
+      //  previous month to current date data logic
+
+      const previousMonthStart = new Date(
+        givenDate.getFullYear(),
+        givenDate.getMonth() - 1,
+        1
+      );
+
+      const previousMonthStartStr = previousMonthStart
+        .toISOString()
+        .split("T")[0];
 
       let matchObj = {
         userId: userObjectId,
@@ -148,15 +182,37 @@ module.exports = {
       ];
       let result = await Attendance.aggregate(pipeline);
 
+      // user details 
+
       const userDetails = await User.findById(userObjectId).select(
         "fullName email userType userId mobileNumber profileImage"
       );
+
+      // hoildays logic
+
+      const year = givenDate.getFullYear();
+      const sundays = [];
+
+      let currentDate = new Date(year, 0, 1);
+
+      while (currentDate.getFullYear() === year) {
+        if (currentDate.getDay() === 0) {
+          sundays.push({
+            date: currentDate / 1000,
+            holidayName: "Sunday",
+          });
+        }
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
 
       UtilController.sendSuccess(req, res, next, {
         message: "Successfully fetched attendance details",
         responseCode: returnCode.validSession,
         result,
         userDetails,
+        publicHolidays: sundays,
+        present,
+        absents,
       });
     } catch (error) {
       console.log("error: ", error);
