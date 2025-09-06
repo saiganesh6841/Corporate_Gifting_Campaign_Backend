@@ -27,7 +27,6 @@ module.exports = {
 
       // check already on same day attendance been created
       const attendance = await Attendance.findOne(createObj);
-      console.log(attendance, "attendance");
 
       if (attendance) {
         return UtilController.sendError(req, res, next, {
