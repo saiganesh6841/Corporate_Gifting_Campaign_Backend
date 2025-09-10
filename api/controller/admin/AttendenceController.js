@@ -60,6 +60,18 @@ module.exports = {
         },
         { $unwind: "$userDetails" },
         {
+          $sort: { attendanceDate: -1 },
+        },
+        {
+          $group: {
+            _id: "$userId",
+            doc: { $first: "$$ROOT" },
+          },
+        },
+        {
+          $replaceRoot: { newRoot: "$doc" },
+        },
+        {
           $project: {
             _id: 1,
             userObjectId: "$userDetails._id",
