@@ -99,13 +99,13 @@ module.exports = {
       ];
 
       const result = await Attendance.aggregate(pipeline);
-      let pageCount = await Attendance.countDocuments(queryObj);
+      // let pageCount = await Attendance.countDocuments(queryObj);
 
       UtilController.sendSuccess(req, res, next, {
         rows: result,
         message: "Attendence listed",
-        pages: Math.ceil(pageCount / pageSize),
-        filterRecords: pageCount,
+        pages: Math.ceil(result?.length / pageSize),
+        filterRecords: result?.length,
         responseCode: returnCode.validSession,
       });
     } catch (error) {
