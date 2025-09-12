@@ -325,7 +325,7 @@ module.exports = {
       ],
     },
     {
-      label: "Attendence",
+      label: "Attendance",
       enable: true,
       buttons: [
         {
