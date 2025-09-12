@@ -291,6 +291,7 @@ module.exports = {
     const nineAM = new Date();
     nineAM.setHours(9, 0, 0, 0);
     const nineAMTimestamp = nineAM.getTime() / 1000;
+    console.log(timestamp > nineAMTimestamp, "IsMorethan9");
 
     if (timestamp > nineAMTimestamp) return "late";
     if (timestamp < nineAMTimestamp) return "early";
