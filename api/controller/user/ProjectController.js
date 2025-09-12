@@ -74,13 +74,13 @@ module.exports = {
         }),
       ]);
 
-      const currentDate = await UtilController.convertTOISOFormat();
+      const { isoDate } = await UtilController.convertTOISOFormat();
 
       const checkedInResult = await Attendance.aggregate([
         {
           $match: {
             userId: userObjectId,
-            attendanceDate: currentDate,
+            attendanceDate: isoDate,
           },
         },
       ]);
@@ -292,8 +292,8 @@ module.exports = {
         createdAt: Math.floor(Date.now() / 1000),
       });
 
-      if(notes?.length > 0){
-        newEntry.notes = notes
+      if (notes?.length > 0) {
+        newEntry.notes = notes;
       }
 
       await newEntry.save();
@@ -312,7 +312,7 @@ module.exports = {
 
       // create a chat using the entry id
 
-       const updateObj = {
+      const updateObj = {
         isAdminCreated: false,
         userId: userId,
       };
