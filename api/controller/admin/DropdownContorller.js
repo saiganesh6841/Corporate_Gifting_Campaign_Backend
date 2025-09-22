@@ -10,6 +10,7 @@ module.exports = {
         {
           $match: {
             active: true,
+            status: req?.body?.status,
           },
         },
         {
