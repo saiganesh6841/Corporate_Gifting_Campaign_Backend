@@ -289,11 +289,12 @@ module.exports = {
 
   calculateAttendanceCheckinStatus: (timestamp) => {
     const nineAM = new Date();
+    let convertedTimeStamp = timestamp + ((5 * 60 + 30) * 60 * 1000) / 1000;
     nineAM.setHours(9, 0, 0, 0);
     const nineAMTimestamp = nineAM.getTime() / 1000;
 
-    if (timestamp > nineAMTimestamp) return "late";
-    if (timestamp < nineAMTimestamp) return "early";
-    if (timestamp === nineAMTimestamp) return "present";
+    if (convertedTimeStamp > nineAMTimestamp) return "late";
+    if (convertedTimeStamp < nineAMTimestamp) return "early";
+    if (convertedTimeStamp === nineAMTimestamp) return "present";
   },
 };

@@ -1,6 +1,7 @@
 const Attendance = require("../../model/Attendance");
 const UtilController = require("../../controller/services/UtilController");
 const { returnCode } = require("../../../config/responseCode");
+const User = require("../../model/User");
 module.exports = {
   checkIn: async (req, res, next) => {
     try {
@@ -124,6 +125,10 @@ module.exports = {
         });
       }
 
+      const userCreatedAt = await User.findOne({ _id: userId })
+        .select("createdAt -_id")
+        .lean();
+
       if (!date) {
         return UtilController.sendSuccess(req, res, next, {
           message: "Date is required",
@@ -176,6 +181,7 @@ module.exports = {
         responseCode: returnCode.validSession,
         result,
         publicHolidays: sundays,
+        userCreatedAt: userCreatedAt?.createdAt,
       });
     } catch (error) {
       console.log(error, "adch poyiii");
