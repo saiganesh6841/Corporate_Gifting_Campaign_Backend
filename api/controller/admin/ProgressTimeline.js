@@ -12,16 +12,15 @@ module.exports = {
         endDate,
         page = 1,
         pageSize = 10,
+        projectId,
       } = req.body;
 
       const pageNumber = parseInt(page);
       const size = parseInt(pageSize);
       const skip = (pageNumber - 1) * size;
 
-      let queryObj = {
-        roomId: UtilController.convertToMongoose(roomId),
-        flatId: UtilController.convertToMongoose(flatId),
-      };
+      let queryObj = {};
+      let results;
 
       if (
         !UtilController.isEmpty(startDate) &&
@@ -31,6 +30,15 @@ module.exports = {
           $gte: startDate,
           $lte: endDate,
         };
+      }
+
+      if (UtilController.isEmpty(flatId) && UtilController.isEmpty(roomId)) {
+        queryObj.projectId = UtilController.convertToMongoose(projectId);
+      } else if(UtilController.isEmpty(roomId)) {
+        queryObj.flatId = UtilController.convertToMongoose(flatId);
+      } else{
+        queryObj.roomId = UtilController.convertToMongoose(roomId);
+        queryObj.flatId = UtilController.convertToMongoose(flatId);
       }
 
       const pipeline = [
@@ -63,7 +71,7 @@ module.exports = {
         },
       ];
 
-      const results = await Entries.aggregate(pipeline);
+      results = await Entries.aggregate(pipeline);
 
       const countPipeline = [
         { $match: queryObj },

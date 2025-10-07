@@ -170,6 +170,7 @@ module.exports = {
         newEntry = new Entry({
           flatId: taskResult.flatNo,
           roomId: taskResult.room,
+          projectId: taskResult.projectId,
           taskId: taskId,
           roomImages: imageUrls,
           workerId: userId,

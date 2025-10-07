@@ -22,6 +22,7 @@ const entrySchema = new mongoose.Schema({
   uploadId: { type: String },
   roomId: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
   flatId: { type: mongoose.Schema.Types.ObjectId, ref: "ProjectFlats" },
+  projectId:{ type: mongoose.Schema.Types.ObjectId, ref: "Project" }
 });
 
 module.exports = mongoose.model("Entry", entrySchema);
