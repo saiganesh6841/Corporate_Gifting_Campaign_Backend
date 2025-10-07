@@ -6,13 +6,12 @@ const UtilController = require("../services/UtilController");
 module.exports = {
   getProjects: async (req, res, next) => {
     try {
+      const matchCondition = { active: true };
+      if (req?.body?.status) {
+        matchCondition.status = req.body.status;
+      }
       const pipeline = [
-        {
-          $match: {
-            active: true,
-            status: req?.body?.status,
-          },
-        },
+        { $match: matchCondition },
         {
           $project: {
             projectName: 1,
