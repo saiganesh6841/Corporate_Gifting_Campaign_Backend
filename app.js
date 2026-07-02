@@ -15,7 +15,8 @@ var app = express();
 
 // mongodb configuration
 const mongoose = require("mongoose");
-const connectionUrl = process.env.MONGODB_URI_DEV;
+const connectionUrl =
+  process.env.MONGODB_URI_PROD || process.env.MONGODB_URI_DEV;
 if (!(connectionUrl === undefined || connectionUrl?.length <= 0)) {
   mongoose.set("debug", false);
   mongoose.Promise = global.Promise;
@@ -32,8 +33,6 @@ if (!(connectionUrl === undefined || connectionUrl?.length <= 0)) {
   });
 }
 
-
-
 app.use(
   cors({
     origin: [
@@ -43,18 +42,18 @@ app.use(
       "http://127.0.0.1:5173",
     ],
     credentials: true,
-  })
+  }),
 );
 
 app.use(
   express.json({
     limit: "50mb",
-  })
+  }),
 );
 app.use(
   express.urlencoded({
     extended: true,
-  })
+  }),
 );
 app.use(multer());
 app.use(
@@ -75,7 +74,7 @@ app.use(
       secure: false,
       // expires: new Date(Date.now() + 300000),
     },
-  })
+  }),
 );
 app.use(cookieParser());
 
