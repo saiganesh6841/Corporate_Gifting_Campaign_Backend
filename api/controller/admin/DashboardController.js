@@ -21,6 +21,7 @@ module.exports = {
       if (userType === "admin") {
         const [
           totalOrganizations,
+          totalUsers,
           totalVendors,
           totalHRs,
           totalEmployees,
@@ -35,6 +36,10 @@ module.exports = {
           monthlyOrderTrend,
         ] = await Promise.all([
           Organization.countDocuments({ active: true }),
+          User.countDocuments({
+            active: true,
+            userType: { $ne: "employee" },
+          }),
           User.countDocuments({ active: true, userType: "vendor" }),
           User.countDocuments({ active: true, userType: "hr" }),
           User.countDocuments({ active: true, userType: "employee" }),
@@ -155,6 +160,7 @@ module.exports = {
           data: {
             userType,
             summary: {
+              totalUsers,
               totalOrganizations,
               totalVendors,
               totalHRs,
@@ -181,6 +187,172 @@ module.exports = {
         });
       }
 
+      // ── HR ──────────────────────────────────────────────────
+      // if (userType === "HR") {
+      //   if (!organizationId) {
+      //     return UtilController.sendError(req, res, next, {
+      //       responseCode: returnCode.invalidParams,
+      //       message: "organizationId is required for HR dashboard",
+      //     });
+      //   }
+
+      //   const orgId = toObjectId(organizationId);
+
+      //   const [
+      //     organization,
+      //     totalEmployees,
+      //     totalCampaigns,
+      //     activeCampaigns,
+      //     completedCampaigns,
+      //     campaignStats,
+      //     orderStats,
+      //     ordersByStatus,
+      //     recentCampaigns,
+      //     topProducts,
+      //   ] = await Promise.all([
+      //     Organization.findById(organizationId, {
+      //       name: 1,
+      //       logo: 1,
+      //       email: 1,
+      //       city: 1,
+      //       state: 1,
+      //       mobileNumber: 1,
+      //     }).lean(),
+      //     User.countDocuments({
+      //       organizationId,
+      //       userType: "employee",
+      //       active: true,
+      //     }),
+      //     Campaign.countDocuments({
+      //       organizationId: organizationId,
+      //       active: true,
+      //     }),
+      //     Campaign.countDocuments({
+      //       organization: organizationId,
+      //       active: true,
+      //       status: "active",
+      //       campaignDeadline: { $gte: now },
+      //     }),
+      //     Campaign.countDocuments({
+      //       organization: organizationId,
+      //       active: true,
+      //       status: "completed",
+      //     }),
+      //     Campaign.aggregate([
+      //       { $match: { organization: orgId, active: true } },
+      //       {
+      //         $group: {
+      //           _id: null,
+      //           totalEmployeesInvited: { $sum: "$totalEmployees" },
+      //           totalGiftsSelected: { $sum: "$giftsSelected" },
+      //           totalOrdersShipped: { $sum: "$ordersShipped" },
+      //           totalDelivered: { $sum: "$deliveredOrders" },
+      //           totalBudgetAllocated: {
+      //             $sum: {
+      //               $multiply: ["$budgetPerEmployee", "$totalEmployees"],
+      //             },
+      //           },
+      //         },
+      //       },
+      //     ]),
+      //     Order.aggregate([
+      //       { $match: { organization: orgId, active: true } },
+      //       {
+      //         $group: {
+      //           _id: null,
+      //           totalOrders: { $sum: 1 },
+      //           totalBudgetUsed: { $sum: "$price" },
+      //         },
+      //       },
+      //     ]),
+      //     Order.aggregate([
+      //       { $match: { organization: orgId, active: true } },
+      //       { $group: { _id: "$status", count: { $sum: 1 } } },
+      //     ]),
+      //     Campaign.find(
+      //       { organization: organizationId, active: true },
+      //       {
+      //         campaignName: 1,
+      //         occasion: 1,
+      //         status: 1,
+      //         giftingModel: 1,
+      //         totalEmployees: 1,
+      //         giftsSelected: 1,
+      //         deliveredOrders: 1,
+      //         budgetPerEmployee: 1,
+      //         campaignDeadline: 1,
+      //         createdAt: 1,
+      //       },
+      //     )
+      //       .sort({ createdAt: -1 })
+      //       .limit(5)
+      //       .lean(),
+      //     Order.aggregate([
+      //       { $match: { organization: orgId, active: true } },
+      //       {
+      //         $group: {
+      //           _id: "$product",
+      //           totalOrders: { $sum: 1 },
+      //           productName: { $first: "$productSnapshot.name" },
+      //           thumbnailImage: { $first: "$productSnapshot.thumbnailImage" },
+      //         },
+      //       },
+      //       { $sort: { totalOrders: -1 } },
+      //       { $limit: 5 },
+      //     ]),
+      //   ]);
+
+      //   const orderStatusMap = {};
+      //   ordersByStatus.forEach((s) => {
+      //     orderStatusMap[s._id] = s.count;
+      //   });
+
+      //   const cStats = campaignStats?.[0] || {};
+      //   const oStats = orderStats?.[0] || {};
+      //   const pendingSelections = Math.max(
+      //     (cStats.totalEmployeesInvited || 0) -
+      //       (cStats.totalGiftsSelected || 0),
+      //     0,
+      //   );
+
+      //   return UtilController.sendSuccess(req, res, next, {
+      //     responseCode: returnCode.validSession,
+      //     message: "Dashboard fetched successfully",
+      //     data: {
+      //       userType,
+      //       organization: {
+      //         name: organization?.name || "",
+      //         logo: organization?.logo || "",
+      //         email: organization?.email || "",
+      //         city: organization?.city || "",
+      //         state: organization?.state || "",
+      //         mobileNumber: organization?.mobileNumber || "",
+      //       },
+      //       summary: {
+      //         totalEmployees,
+      //         totalCampaigns,
+      //         activeCampaigns,
+      //         completedCampaigns,
+      //         totalGiftsSelected: cStats.totalGiftsSelected || 0,
+      //         pendingSelections,
+      //         totalOrdersShipped: cStats.totalOrdersShipped || 0,
+      //         totalDelivered: cStats.totalDelivered || 0,
+      //         totalBudgetAllocated: cStats.totalBudgetAllocated || 0,
+      //         totalBudgetUsed: oStats.totalBudgetUsed || 0,
+      //         totalOrders: oStats.totalOrders || 0,
+      //       },
+      //       ordersByStatus: {
+      //         pending: orderStatusMap["pending"] || 0,
+      //         processing: orderStatusMap["processing"] || 0,
+      //         shipped: orderStatusMap["shipped"] || 0,
+      //         delivered: orderStatusMap["delivered"] || 0,
+      //         cancelled: orderStatusMap["cancelled"] || 0,
+      //       },
+      //       recentCampaigns,
+      //       topProducts,
+      //     },
+      //   });
+      // }
       // ── HR ──────────────────────────────────────────────────
       if (userType === "HR") {
         if (!organizationId) {
@@ -212,28 +384,40 @@ module.exports = {
             state: 1,
             mobileNumber: 1,
           }).lean(),
+
+          // total employees under this org
           User.countDocuments({
             organizationId,
             userType: "employee",
             active: true,
           }),
+
+          // ✅ FIX: use "organization" field (not "organizationId") — matches Campaign schema
           Campaign.countDocuments({
             organizationId: organizationId,
             active: true,
           }),
+
+          // ✅ active = status active AND deadline not yet passed
           Campaign.countDocuments({
-            organization: organizationId,
+            organizationId: organizationId,
             active: true,
             status: "active",
             campaignDeadline: { $gte: now },
           }),
+
+          // ✅ completed = explicitly marked completed OR deadline already passed
           Campaign.countDocuments({
-            organization: organizationId,
+            organizationId: organizationId,
             active: true,
-            status: "completed",
+            $or: [
+              { status: "completed" },
+              { status: "active", campaignDeadline: { $lt: now } },
+            ],
           }),
+
           Campaign.aggregate([
-            { $match: { organization: orgId, active: true } },
+            { $match: { organizationId: orgId, active: true } },
             {
               $group: {
                 _id: null,
@@ -249,6 +433,7 @@ module.exports = {
               },
             },
           ]),
+
           Order.aggregate([
             { $match: { organization: orgId, active: true } },
             {
@@ -259,28 +444,64 @@ module.exports = {
               },
             },
           ]),
+
           Order.aggregate([
             { $match: { organization: orgId, active: true } },
             { $group: { _id: "$status", count: { $sum: 1 } } },
           ]),
-          Campaign.find(
-            { organization: organizationId, active: true },
+
+          // recent campaigns with computed status for display
+          Campaign.aggregate([
+            { $match: { organization: orgId, active: true } },
             {
-              campaignName: 1,
-              occasion: 1,
-              status: 1,
-              giftingModel: 1,
-              totalEmployees: 1,
-              giftsSelected: 1,
-              deliveredOrders: 1,
-              budgetPerEmployee: 1,
-              campaignDeadline: 1,
-              createdAt: 1,
+              $addFields: {
+                // compute display status — if deadline passed show as completed even if DB says active
+                displayStatus: {
+                  $cond: {
+                    if: {
+                      $and: [
+                        { $eq: ["$status", "active"] },
+                        { $lt: ["$campaignDeadline", now] },
+                      ],
+                    },
+                    then: "completed",
+                    else: "$status",
+                  },
+                },
+                selectionRate: {
+                  $cond: {
+                    if: { $gt: ["$totalEmployees", 0] },
+                    then: {
+                      $multiply: [
+                        { $divide: ["$giftsSelected", "$totalEmployees"] },
+                        100,
+                      ],
+                    },
+                    else: 0,
+                  },
+                },
+              },
             },
-          )
-            .sort({ createdAt: -1 })
-            .limit(5)
-            .lean(),
+            {
+              $project: {
+                campaignName: 1,
+                occasion: 1,
+                status: 1,
+                displayStatus: 1,
+                giftingModel: 1,
+                totalEmployees: 1,
+                giftsSelected: 1,
+                deliveredOrders: 1,
+                budgetPerEmployee: 1,
+                campaignDeadline: 1,
+                selectionRate: 1,
+                createdAt: 1,
+              },
+            },
+            { $sort: { createdAt: -1 } },
+            { $limit: 5 },
+          ]),
+
           Order.aggregate([
             { $match: { organization: orgId, active: true } },
             {
@@ -347,7 +568,6 @@ module.exports = {
           },
         });
       }
-
       // ── VENDOR ──────────────────────────────────────────────
       if (userType === "vendor") {
         const vendorId = toObjectId(userId);

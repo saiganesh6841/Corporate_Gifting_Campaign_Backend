@@ -99,7 +99,16 @@ module.exports = {
         Organization.findById(organizationId, { name: 1 }).lean(),
         Product.find(
           { _id: { $in: parsedProductIds }, active: true },
-          { name: 1, price: 1, discountPrice: 1, thumbnailImage: 1, vendor: 1 },
+          {
+            name: 1,
+            price: 1,
+            discountPrice: 1,
+            thumbnailImage: 1,
+            vendor: 1,
+            category: 1,
+            brand: 1,
+            description: 1,
+          },
         ).lean(),
       ]);
 
@@ -117,6 +126,9 @@ module.exports = {
         discountPrice: p.discountPrice,
         thumbnailImage: p.thumbnailImage,
         vendor: p.vendor,
+        category: p.category,
+        brand: p.brand,
+        description: p.description,
       }));
 
       // single product for hr_selected
@@ -170,7 +182,8 @@ module.exports = {
       console.log("✅ Campaign created:", campaign._id);
 
       const now = Math.floor(Date.now() / 1000);
-      const BASE_GIFT_URL = "http://localhost:5173/#/gift";
+      const BASE_GIFT_URL =
+        "https://bodacious-overspend-limit.ngrok-free.dev/#/gift";
 
       const userBulkOps = [];
       let skippedRows = 0;
@@ -369,7 +382,7 @@ module.exports = {
           {
             $or: [
               { email: { $in: excelEmails } },
-              { mobileNumber: { $in: excelMobiles } },
+              // { mobileNumber: { $in: excelMobiles } },
             ],
             userType: "employee",
             active: true,
@@ -405,7 +418,7 @@ module.exports = {
           deliveryAddress: {
             fullName: emp.fullName,
             mobileNumber: emp.mobileNumber || "",
-            addressLine: emp.address || "",
+            address: emp.address || "",
             city: emp.city || "",
             state: emp.state || "",
             pincode: emp.pincode || "",
@@ -489,7 +502,7 @@ module.exports = {
 
           const mailList = employeesWithEmail.map((emp) => {
             const giftLink =
-              emp.giftLink || `${BASE_GIFT_URL}/${emp.linkToken}`;
+              emp.giftLink || `${BASE_GIFT_URL}/${emp?.linkToken}`;
 
             const resolvedHtml = emailHtmlContent
               .replace(/\{\{OrganizationName\}\}/g, org?.name || "")
@@ -1420,6 +1433,9 @@ module.exports = {
                 price: "$products.price",
                 discountPrice: "$products.discountPrice",
                 thumbnailImage: "$products.thumbnailImage",
+                description: "$products.description",
+                category: "$products.category",
+                brand: "$products.brand",
                 vendor: {
                   _id: "$vendor._id",
                   fullName: "$vendor.fullName",

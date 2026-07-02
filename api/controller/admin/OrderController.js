@@ -937,7 +937,10 @@ module.exports = {
           "fullName email mobileNumber userId employeeCode department",
         )
         .populate("vendor", "fullName email mobileNumber")
-        .populate("campaign", "campaignName occasion giftingModel")
+        .populate(
+          "campaign",
+          "campaignName occasion giftingModel products campaignDeadline campaignWindowStart campaignWindowEnd budgetPerEmployee ",
+        )
         .populate("organization", "name email logo")
         .lean();
 

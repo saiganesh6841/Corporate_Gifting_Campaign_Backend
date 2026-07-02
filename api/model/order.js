@@ -36,7 +36,7 @@ const orderSchema = new mongoose.Schema({
   deliveryAddress: {
     fullName: { type: String, default: "" },
     mobileNumber: { type: String, default: "" },
-    addressLine: { type: String, default: "" },
+    address: { type: String, default: "" },
     city: { type: String, default: "" },
     state: { type: String, default: "" },
     pincode: { type: String, default: "" },
