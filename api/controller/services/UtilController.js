@@ -153,13 +153,13 @@ module.exports = {
           for (var i = 0; i < attachmentObj.length; i++) {
             attachmentName = Date.now() + "_" + attachmentObj[i].originalname;
             attachmentUrlArray.push(
-              link.concat(bucket + "/" + encodeURIComponent(attachmentName))
+              link.concat(bucket + "/" + encodeURIComponent(attachmentName)),
             );
             await AwsController.upload2AWS(
               attachmentObj[i].path,
               bucket,
               attachmentName,
-              attachmentObj[i].mimetype
+              attachmentObj[i].mimetype,
             ); // this is async call, will not wait until to finish upload
           }
         } else {
@@ -169,13 +169,13 @@ module.exports = {
           attachmentName = Date.now() + "_" + attachmentObj.originalname;
           //  attachmentUrl = link.concat(bucket + '/' + attachmentName);
           attachmentUrlArray.push(
-            link.concat(bucket + "/" + encodeURIComponent(attachmentName))
+            link.concat(bucket + "/" + encodeURIComponent(attachmentName)),
           );
           await AwsController.upload2AWS(
             attachmentPath,
             bucket,
             attachmentName,
-            attachmentObj.mimetype
+            attachmentObj.mimetype,
           ); // this is async call, will not wait until to finish upload
           if (
             !module.exports.isEmpty(req.body.isPrivate) &&
@@ -269,7 +269,7 @@ module.exports = {
       const tag = await Tag.findOneAndUpdate(
         { active: true, tagType },
         { $inc: { sequenceNo: 1 }, updatedAt: Math.floor(Date.now() / 1000) },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
+        { upsert: true, new: true, setDefaultsOnInsert: true },
       );
       // Ensure sequence number is at least 4 digits long (e.g., 0001)
       const sequenceNo = tag.sequenceNo.toString().padStart(4, "0");
@@ -296,5 +296,8 @@ module.exports = {
     if (convertedTimeStamp > nineAMTimestamp) return "late";
     if (convertedTimeStamp < nineAMTimestamp) return "early";
     if (convertedTimeStamp === nineAMTimestamp) return "present";
+  },
+  convertToMongoose: (id) => {
+    return new mongoose.Types.ObjectId(id);
   },
 };

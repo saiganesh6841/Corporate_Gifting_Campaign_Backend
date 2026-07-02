@@ -4,8 +4,149 @@ const { returnCode } = require("../../../config/responseCode");
 const Tag = require("../../model/Tag");
 const Role = require("../../model/Role");
 var CryptoJS = require("crypto-js");
+const { default: mongoose } = require("mongoose");
 
 module.exports = {
+  // getAllUser: async (req, res, next) => {
+  //   try {
+  //     const { ...filters } = req.body;
+  //     let queryObj = {
+  //       active: filters.active ?? true,
+  //     };
+  //     if (filters.active === "All") {
+  //       delete queryObj.active;
+  //     }
+  //     if (
+  //       UtilController.isEmpty(filters.userType) ||
+  //       filters.userType === "All"
+  //     ) {
+  //       // Default and "All" both exclude employees
+  //       queryObj.userType = { $ne: "employee" };
+  //     } else {
+  //       // Filter by selected user type
+  //       queryObj.userType = filters.userType;
+  //     }
+  //     let sortOrder = {};
+
+  //     sortOrder = {
+  //       updatedAt: -1,
+  //     };
+
+  //     let page = 0;
+  //     let pageSize = 10;
+  //     if (
+  //       !UtilController.isEmpty(filters.page) &&
+  //       !UtilController.isEmpty(filters.pageSize)
+  //     ) {
+  //       page = Number(filters.page);
+  //       pageSize = Number(filters.pageSize);
+  //     }
+
+  //     let searchKey = filters.keyword ?? "";
+
+  //     // if (!UtilController.isEmpty(filters.userType)) {
+  //     //   queryObj["userType"] = filters.userType;
+  //     // }
+
+  //     // if (filters.userType === "All") {
+  //     //   delete queryObj.userType;
+  //     // }
+
+  //     if (!UtilController.isEmpty(filters.startDate)) {
+  //       queryObj["$and"] = [
+  //         { createdAt: { $gte: filters.startDate } },
+  //         {
+  //           createdAt: {
+  //             $lte: filters.endDate || Math.floor(new Date() / 1000),
+  //           },
+  //         },
+  //       ];
+  //     }
+
+  //     // if (!UtilController.isEmpty(searchKey)) {
+  //     //   queryObj["$or"] = [
+  //     //     { fullName: { $regex: searchKey, $options: "i" } },
+  //     //     { userId: { $regex: searchKey, $options: "i" } },
+  //     //     { userType: { $regex: searchKey, $options: "i" } },
+  //     //     { mobileNumber: { $regex: searchKey, $options: "i" } },
+  //     //     { email: { $regex: searchKey, $options: "i" } },
+  //     //   ];
+  //     // }
+  //     // console.log("queryObj: ", queryObj);
+
+  //     const pipeline = [
+  //       {
+  //         $match: queryObj,
+  //       },
+  //       {
+  //         $lookup: {
+  //           from: "users",
+  //           localField: "createdBy",
+  //           foreignField: "_id",
+  //           as: "createdByUser",
+  //         },
+  //       },
+  //       {
+  //         $lookup: {
+  //           from: "users",
+  //           localField: "updatedBy",
+  //           foreignField: "_id",
+  //           as: "updatedByUser",
+  //         },
+  //       },
+  //       {
+  //         $addFields: {
+  //           createdBy: { $arrayElemAt: ["$createdByUser.fullName", 0] },
+  //         },
+  //       },
+  //       {
+  //         $addFields: {
+  //           updatedBy: { $arrayElemAt: ["$updatedByUser.fullName", 0] },
+  //         },
+  //       },
+  //       ...(searchKey
+  //         ? [
+  //             {
+  //               $match: {
+  //                 $or: [
+  //                   { fullName: { $regex: searchKey, $options: "i" } },
+  //                   { userId: { $regex: searchKey, $options: "i" } },
+  //                   { userType: { $regex: searchKey, $options: "i" } },
+  //                   { mobileNumber: { $regex: searchKey, $options: "i" } },
+  //                   { email: { $regex: searchKey, $options: "i" } },
+  //                   { createdBy: { $regex: searchKey, $options: "i" } },
+  //                   { updatedBy: { $regex: searchKey, $options: "i" } },
+  //                 ],
+  //               },
+  //             },
+  //           ]
+  //         : []),
+  //       {
+  //         $project: {
+  //           createdByUser: 0,
+  //           updatedByUser: 0,
+  //         },
+  //       },
+  //       { $sort: sortOrder },
+  //       { $skip: page * pageSize },
+  //       { $limit: pageSize },
+  //     ];
+
+  //     const result = await User.aggregate(pipeline);
+  //     let pageCount = await User.countDocuments(queryObj);
+
+  //     UtilController.sendSuccess(req, res, next, {
+  //       rows: result,
+  //       pages: Math.ceil(pageCount / pageSize),
+  //       filterRecords: pageCount,
+  //       message: "success",
+  //       responseCode: returnCode.validSession,
+  //     });
+  //   } catch (error) {
+  //     console.log("error: ", error);
+  //     UtilController.sendError(req, res, error);
+  //   }
+  // },
   getAllUser: async (req, res, next) => {
     try {
       const { ...filters } = req.body;
@@ -16,11 +157,31 @@ module.exports = {
         delete queryObj.active;
       }
 
-      let sortOrder = {};
+      if (
+        UtilController.isEmpty(filters.userType) ||
+        filters.userType === "All"
+      ) {
+        // no userType passed or "All" — exclude employees, show all other types
+        queryObj.userType = { $ne: "employee" };
+      } else if (filters.userType === "employee") {
+        // employee tab — scope to organization only
+        queryObj.userType = "employee";
+        if (!filters.organizationId) {
+          return UtilController.sendError(req, res, next, {
+            responseCode: returnCode.invalidParams,
+            message: "organizationId is required to list employees",
+          });
+        }
+        // queryObj.organizationId = filters.organizationId;
+        queryObj.organizationId = new mongoose.Types.ObjectId(
+          filters.organizationId,
+        );
+      } else {
+        // specific userType like hr, vendor, superadmin
+        queryObj.userType = filters.userType;
+      }
 
-      sortOrder = {
-        updatedAt: -1,
-      };
+      let sortOrder = { updatedAt: -1 };
 
       let page = 0;
       let pageSize = 10;
@@ -34,14 +195,6 @@ module.exports = {
 
       let searchKey = filters.keyword ?? "";
 
-      if (!UtilController.isEmpty(filters.userType)) {
-        queryObj["userType"] = filters.userType;
-      }
-
-      if (filters.userType === "All") {
-        delete queryObj.userType;
-      }
-
       if (!UtilController.isEmpty(filters.startDate)) {
         queryObj["$and"] = [
           { createdAt: { $gte: filters.startDate } },
@@ -53,21 +206,8 @@ module.exports = {
         ];
       }
 
-      // if (!UtilController.isEmpty(searchKey)) {
-      //   queryObj["$or"] = [
-      //     { fullName: { $regex: searchKey, $options: "i" } },
-      //     { userId: { $regex: searchKey, $options: "i" } },
-      //     { userType: { $regex: searchKey, $options: "i" } },
-      //     { mobileNumber: { $regex: searchKey, $options: "i" } },
-      //     { email: { $regex: searchKey, $options: "i" } },
-      //   ];
-      // }
-      // console.log("queryObj: ", queryObj);
-
       const pipeline = [
-        {
-          $match: queryObj,
-        },
+        { $match: queryObj },
         {
           $lookup: {
             from: "users",
@@ -85,13 +225,20 @@ module.exports = {
           },
         },
         {
-          $addFields: {
-            createdBy: { $arrayElemAt: ["$createdByUser.fullName", 0] },
+          $lookup: {
+            from: "organizations",
+            localField: "organizationId",
+            foreignField: "_id",
+            as: "organizationDetails",
           },
         },
         {
           $addFields: {
+            createdBy: { $arrayElemAt: ["$createdByUser.fullName", 0] },
             updatedBy: { $arrayElemAt: ["$updatedByUser.fullName", 0] },
+            organizationName: {
+              $arrayElemAt: ["$organizationDetails.name", 0],
+            },
           },
         },
         ...(searchKey
@@ -104,6 +251,10 @@ module.exports = {
                     { userType: { $regex: searchKey, $options: "i" } },
                     { mobileNumber: { $regex: searchKey, $options: "i" } },
                     { email: { $regex: searchKey, $options: "i" } },
+                    { employeeCode: { $regex: searchKey, $options: "i" } },
+                    { department: { $regex: searchKey, $options: "i" } },
+                    { designation: { $regex: searchKey, $options: "i" } },
+                    { organizationName: { $regex: searchKey, $options: "i" } },
                     { createdBy: { $regex: searchKey, $options: "i" } },
                     { updatedBy: { $regex: searchKey, $options: "i" } },
                   ],
@@ -115,13 +266,16 @@ module.exports = {
           $project: {
             createdByUser: 0,
             updatedByUser: 0,
+            organizationDetails: 0,
+            password: 0,
+            tempOtp: 0,
+            linkToken: 0,
           },
         },
         { $sort: sortOrder },
         { $skip: page * pageSize },
         { $limit: pageSize },
       ];
-
       const result = await User.aggregate(pipeline);
       let pageCount = await User.countDocuments(queryObj);
 
@@ -137,7 +291,6 @@ module.exports = {
       UtilController.sendError(req, res, error);
     }
   },
-
   createUser: async (req, res, next) => {
     try {
       let createObj = req.body;
@@ -196,7 +349,7 @@ module.exports = {
           {
             $inc: { sequenceNo: 1 },
             updatedAt: Math.floor(Date.now() / 1000),
-          }
+          },
         );
         createObj["userId"] =
           tagResult.prefix + UtilController.pad(tagResult.sequenceNo, 5);
@@ -206,7 +359,7 @@ module.exports = {
           const password = createObj.password;
           const encryptedPassword = CryptoJS.AES.encrypt(
             password,
-            process.env.passwordSecretKey
+            process.env.passwordSecretKey,
           ).toString();
           createObj["password"] = encryptedPassword;
         }
@@ -256,7 +409,7 @@ module.exports = {
       if (result.password) {
         const bytes = CryptoJS.AES.decrypt(
           result.password,
-          process.env.passwordSecretKey
+          process.env.passwordSecretKey,
         );
         result.password = bytes.toString(CryptoJS.enc.Utf8);
       }
@@ -312,7 +465,7 @@ module.exports = {
         const password = updateObj.password;
         const encryptedPassword = CryptoJS.AES.encrypt(
           password,
-          process.env.passwordSecretKey
+          process.env.passwordSecretKey,
         ).toString();
         updateObj["password"] = encryptedPassword;
       }
@@ -321,12 +474,12 @@ module.exports = {
       updateObj["updatedAt"] = Math.floor(Date.now() / 1000);
 
       const result = await User.findOneAndUpdate(
-        { userId: userId },
+        { _id: userId },
         { $set: updateObj },
         { updatedAt: Math.floor(Date.now() / 1000) },
-        { new: true }
+        { new: true },
       );
-
+      console.log("result: ", result, userId);
       if (UtilController.isEmpty(result)) {
         return UtilController.sendSuccess(req, res, next, {
           message: "User not found",
@@ -357,7 +510,7 @@ module.exports = {
       const result = await User.updateMany(
         { userId: { $in: userId } },
         { $set: { active: false } },
-        { new: true }
+        { new: true },
       );
       if (UtilController.isEmpty(result)) {
         return UtilController.sendSuccess(req, res, next, {

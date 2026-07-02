@@ -26,84 +26,84 @@ module.exports = {
         },
       ],
     },
-    // {
-    //   label: "Teacher",
-    //   enable: true,
-    //   buttons: [
-    //     {
-    //       label: "view",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "add",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "edit",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "delete",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "query",
-    //       enable: true,
-    //     },
-    //   ],
-    // },
-    // {
-    //   label: "Student",
-    //   enable: true,
-    //   buttons: [
-    //     {
-    //       label: "view",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "add",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "edit",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "delete",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "query",
-    //       enable: true,
-    //     },
-    //   ],
-    // },
-    // {
-    //   label: "School",
-    //   enable: true,
-    //   buttons: [
-    //     {
-    //       label: "view",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "add",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "edit",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "delete",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "query",
-    //       enable: true,
-    //     },
-    //   ],
-    // },
+    {
+      label: "Organizations",
+      enable: true,
+      buttons: [
+        {
+          label: "add",
+          enable: true,
+        },
+        {
+          label: "edit",
+          enable: true,
+        },
+        {
+          label: "delete",
+          enable: true,
+        },
+        {
+          label: "query",
+          enable: true,
+        },
+        {
+          label: "export",
+          enable: true,
+        },
+      ],
+    },
+    {
+      label: "Products",
+      enable: true,
+      buttons: [
+        {
+          label: "add",
+          enable: true,
+        },
+        {
+          label: "edit",
+          enable: true,
+        },
+        {
+          label: "delete",
+          enable: true,
+        },
+        {
+          label: "query",
+          enable: true,
+        },
+        {
+          label: "export",
+          enable: true,
+        },
+      ],
+    },
+    {
+      label: "Campaigns",
+      enable: true,
+      buttons: [
+        {
+          label: "add",
+          enable: true,
+        },
+        {
+          label: "edit",
+          enable: true,
+        },
+        {
+          label: "delete",
+          enable: true,
+        },
+        {
+          label: "query",
+          enable: true,
+        },
+        {
+          label: "export",
+          enable: true,
+        },
+      ],
+    },
     {
       label: "Users",
       enable: true,
@@ -134,58 +134,59 @@ module.exports = {
         },
       ],
     },
-    // {
-    //   label: "Ngo",
-    //   enable: true,
-    //   buttons: [
-    //     {
-    //       label: "view",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "add",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "edit",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "delete",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "query",
-    //       enable: true,
-    //     },
-    //   ],
-    // },
-    // {
-    //   label: "Class",
-    //   enable: true,
-    //   buttons: [
-    //     {
-    //       label: "view",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "add",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "edit",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "delete",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "query",
-    //       enable: true,
-    //     },
-    //   ],
-    // },
+    {
+      label: "Orders",
+      enable: true,
+      buttons: [
+        {
+          label: "view",
+          enable: true,
+        },
+
+        {
+          label: "edit",
+          enable: true,
+        },
+        {
+          label: "delete",
+          enable: true,
+        },
+        {
+          label: "export",
+          enable: true,
+        },
+        {
+          label: "query",
+          enable: true,
+        },
+      ],
+    },
+    {
+      label: "Employees",
+      enable: true,
+      buttons: [
+        {
+          label: "view",
+          enable: true,
+        },
+        {
+          label: "add",
+          enable: true,
+        },
+        {
+          label: "edit",
+          enable: true,
+        },
+        {
+          label: "delete",
+          enable: true,
+        },
+        {
+          label: "query",
+          enable: true,
+        },
+      ],
+    },
     // {
     //   label: "Academic",
     //   enable: true,
@@ -264,84 +265,7 @@ module.exports = {
     //     },
     //   ],
     // },
-    {
-      label: "Projects",
-      enable: true,
-      buttons: [
-        {
-          label: "view",
-          enable: true,
-        },
-        {
-          label: "add",
-          enable: true,
-        },
-        {
-          label: "edit",
-          enable: true,
-        },
-        {
-          label: "delete",
-          enable: true,
-        },
-        {
-          label: "query",
-          enable: true,
-        },
-        {
-          label: "export",
-          enable: true,
-        },
-      ],
-    },
-    {
-      label: "Task",
-      enable: true,
-      buttons: [
-        {
-          label: "view",
-          enable: true,
-        },
-        {
-          label: "add",
-          enable: true,
-        },
-        {
-          label: "edit",
-          enable: true,
-        },
-        {
-          label: "delete",
-          enable: true,
-        },
-        {
-          label: "query",
-          enable: true,
-        },
-        {
-          label: "export",
-          enable: true,
-        },
-      ],
-    },
-    {
-      label: "Attendance",
-      enable: true,
-      buttons: [
-        {
-          label: "query",
-          enable: true,
-        },
-        {
-          label: "view",
-          enable: true,
-        },
-        {
-          label: "export",
-          enable: true,
-        },
-      ],
-    },
+
     {
       label: "Role",
       enable: true,
@@ -367,97 +291,6 @@ module.exports = {
           enable: true,
         },
       ],
-    },
-    {
-      label: "Logo",
-      enable: true,
-      buttons: [
-        {
-          label: "view",
-          enable: true,
-        },
-        {
-          label: "add",
-          enable: true,
-        },
-        {
-          label: "edit",
-          enable: true,
-        },
-        {
-          label: "delete",
-          enable: true,
-        },
-        {
-          label: "query",
-          enable: true,
-        },
-      ],
-    },
-    // {
-    //   label: "Schedule Time",
-    //   enable: true,
-    //   buttons: [
-    //     {
-    //       label: "view",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "add",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "edit",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "delete",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "query",
-    //       enable: true,
-    //     },
-    //     {
-    //       label: "export",
-    //       enable: true,
-    //     },
-    //   ],
-    // },
-    {
-      label: "Room",
-      enable: true,
-      buttons: [
-        {
-          label: "view",
-          enable: true,
-        },
-        {
-          label: "add",
-          enable: true,
-        },
-        {
-          label: "edit",
-          enable: true,
-        },
-        {
-          label: "delete",
-          enable: true,
-        },
-        {
-          label: "query",
-          enable: true,
-        },
-        {
-          label: "export",
-          enable: true,
-        },
-      ],
-    },
-    {
-      label: "Progress Timeline",
-      enable: true,
-      buttons: [],
     },
 
     {

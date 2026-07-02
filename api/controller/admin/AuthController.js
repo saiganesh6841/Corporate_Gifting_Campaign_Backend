@@ -44,7 +44,7 @@ module.exports = {
       userCode = UtilController.comparePassword(
         user.password,
         password,
-        process.env.passwordSecretKey
+        process.env.passwordSecretKey,
       );
 
       if (userCode === returnCode.passwordMatched) {
@@ -53,20 +53,20 @@ module.exports = {
         systemCache.set(
           req.sessionID,
           user._id,
-          configuration.login.otpValidation
+          configuration.login.otpValidation,
         ); // 10 minute time
         req.session.userType = user.userType;
         await module.exports.sendOtp(req, user);
         await User.findOneAndUpdate(
           { active: true, email },
-          { $set: { otpExpiresAt: Math.floor(Date.now() / 1000) + 60 } }
+          { $set: { otpExpiresAt: Math.floor(Date.now() / 1000) + 60 } },
         );
         console.log("OTP sent to user:", user.email);
       } else {
         //update password attempt
         await User.findOneAndUpdate(
           { active: true, email },
-          { $inc: { passwordAttempt: 1 } }
+          { $inc: { passwordAttempt: 1 } },
         );
         return UtilController.sendSuccess(req, res, next, {
           responseCode: userCode,
@@ -140,7 +140,7 @@ module.exports = {
               passwordAttempt: 0,
               isPasswordChange: isPasswordChange,
             },
-            { new: true }
+            { new: true },
           )
             .select("userType email fname lname mobileNo _id")
             .lean();
@@ -191,7 +191,7 @@ module.exports = {
 
       if (!(typeof userSes === "undefined" || userSes === null)) {
         const userObj = await User.findById(userSes).select(
-          "fullName active email mobileNumber"
+          "fullName active email mobileNumber",
         );
 
         if (!userObj || !userObj.active) {
@@ -236,7 +236,7 @@ module.exports = {
 
         user = await User.findById(req.session.userId)
           .select(
-            "fullName email mobileNumber  profileImage userType permission dob isPasswordChange"
+            "fullName email mobileNumber  profileImage userType permission dob isPasswordChange organizationId hrId organizationName",
           )
           .populate("permission")
           .lean();

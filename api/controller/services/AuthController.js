@@ -86,7 +86,7 @@ module.exports = {
               message: "authtoken not present or empty in headers",
             },
           },
-          httpReturnCode.unauthorized
+          httpReturnCode.unauthorized,
         );
       }
       //verify auth token
@@ -109,7 +109,7 @@ module.exports = {
               message: `error verify authtoken: ${authtokenResp.name}`,
             },
           },
-          httpReturnCode.unauthorized
+          httpReturnCode.unauthorized,
         );
       }
 
@@ -132,7 +132,7 @@ module.exports = {
           result: `err in verify tkn_mv: ${err?.message}`,
           responseCode: responseCode.returnCode.invalidSession,
         },
-        httpReturnCode.unauthorized
+        httpReturnCode.unauthorized,
       );
     }
   },

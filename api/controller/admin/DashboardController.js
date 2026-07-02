@@ -1,331 +1,501 @@
 const { returnCode } = require("../../../config/responseCode");
-const Project = require("../../model/Project");
-const Task = require("../../model/Task");
 const User = require("../../model/User");
+const Campaign = require("../../model/campaign");
+const Order = require("../../model/order");
+const Organization = require("../../model/organization");
+const Product = require("../../model/product");
 const UtilController = require("../services/UtilController");
+const mongoose = require("mongoose");
+
+const toObjectId = (id) => new mongoose.Types.ObjectId(id.toString());
 
 module.exports = {
-  dashboardCount: async (req, res, next) => {
+  getDashboard: async (req, res, next) => {
     try {
-      const projectPipeline = [
-        {
-          $facet: {
-            totalProjects: [
-              {
-                $match: {
-                  active: true,
-                },
-              },
-              { $count: "totalProjects" },
-            ],
-            completedProjects: [
-              {
-                $match: {
-                  active: true,
-                  status: "completed",
-                },
-              },
-              { $count: "completedProjects" },
-            ],
-            inProgress: [
-              { $match: { status: "inprogress", active: true } },
-              { $count: "inProgress" },
-            ],
-          },
-        },
-      ];
-      const projectCount = await Project.aggregate(projectPipeline);
-      const userPipeline = [
-        {
-          $match: {
+      const userType = req.user.userType;
+      const userId = req.user.userId;
+      const { organizationId } = req.body;
+      const now = Math.floor(Date.now() / 1000);
+      console.log(userType);
+      // ── SUPERADMIN ──────────────────────────────────────────
+      if (userType === "admin") {
+        const [
+          totalOrganizations,
+          totalVendors,
+          totalHRs,
+          totalEmployees,
+          totalProducts,
+          totalCampaigns,
+          activeCampaigns,
+          orderStats,
+          ordersByStatus,
+          recentOrganizations,
+          recentCampaigns,
+          topOrganizationsByOrders,
+          monthlyOrderTrend,
+        ] = await Promise.all([
+          Organization.countDocuments({ active: true }),
+          User.countDocuments({ active: true, userType: "vendor" }),
+          User.countDocuments({ active: true, userType: "hr" }),
+          User.countDocuments({ active: true, userType: "employee" }),
+          Product.countDocuments({ active: true }),
+          Campaign.countDocuments({ active: true }),
+          Campaign.countDocuments({
             active: true,
+            status: "active",
+            campaignDeadline: { $gte: now },
+          }),
+          Order.aggregate([
+            { $match: { active: true } },
+            {
+              $group: {
+                _id: null,
+                totalOrders: { $sum: 1 },
+                totalRevenue: { $sum: "$price" },
+                avgOrderValue: { $avg: "$price" },
+              },
+            },
+          ]),
+          Order.aggregate([
+            { $match: { active: true } },
+            { $group: { _id: "$status", count: { $sum: 1 } } },
+          ]),
+          Organization.find(
+            { active: true },
+            { name: 1, email: 1, city: 1, logo: 1, createdAt: 1 },
+          )
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .lean(),
+          Campaign.aggregate([
+            { $match: { active: true } },
+            {
+              $lookup: {
+                from: "organizations",
+                localField: "organization",
+                foreignField: "_id",
+                as: "orgDetails",
+              },
+            },
+            {
+              $project: {
+                campaignName: 1,
+                occasion: 1,
+                status: 1,
+                giftingModel: 1,
+                totalEmployees: 1,
+                giftsSelected: 1,
+                createdAt: 1,
+                organizationName: { $arrayElemAt: ["$orgDetails.name", 0] },
+              },
+            },
+            { $sort: { createdAt: -1 } },
+            { $limit: 5 },
+          ]),
+          Order.aggregate([
+            { $match: { active: true } },
+            {
+              $group: {
+                _id: "$organization",
+                totalOrders: { $sum: 1 },
+                totalRevenue: { $sum: "$price" },
+              },
+            },
+            {
+              $lookup: {
+                from: "organizations",
+                localField: "_id",
+                foreignField: "_id",
+                as: "orgDetails",
+              },
+            },
+            {
+              $project: {
+                totalOrders: 1,
+                totalRevenue: 1,
+                organizationName: { $arrayElemAt: ["$orgDetails.name", 0] },
+                organizationLogo: { $arrayElemAt: ["$orgDetails.logo", 0] },
+              },
+            },
+            { $sort: { totalOrders: -1 } },
+            { $limit: 5 },
+          ]),
+          Order.aggregate([
+            {
+              $match: {
+                active: true,
+                createdAt: { $gte: now - 6 * 30 * 24 * 60 * 60 },
+              },
+            },
+            {
+              $group: {
+                _id: {
+                  $dateToString: {
+                    format: "%Y-%m",
+                    date: { $toDate: { $multiply: ["$createdAt", 1000] } },
+                  },
+                },
+                totalOrders: { $sum: 1 },
+                totalRevenue: { $sum: "$price" },
+              },
+            },
+            { $sort: { _id: 1 } },
+          ]),
+        ]);
+
+        const orderStatusMap = {};
+        ordersByStatus.forEach((s) => {
+          orderStatusMap[s._id] = s.count;
+        });
+        const oStats = orderStats?.[0] || {};
+
+        return UtilController.sendSuccess(req, res, next, {
+          responseCode: returnCode.validSession,
+          message: "Dashboard fetched successfully",
+          data: {
+            userType,
+            summary: {
+              totalOrganizations,
+              totalVendors,
+              totalHRs,
+              totalEmployees,
+              totalProducts,
+              totalCampaigns,
+              activeCampaigns,
+              totalOrders: oStats.totalOrders || 0,
+              totalRevenue: oStats.totalRevenue || 0,
+              avgOrderValue: Math.round(oStats.avgOrderValue || 0),
+            },
+            ordersByStatus: {
+              pending: orderStatusMap["pending"] || 0,
+              processing: orderStatusMap["processing"] || 0,
+              shipped: orderStatusMap["shipped"] || 0,
+              delivered: orderStatusMap["delivered"] || 0,
+              cancelled: orderStatusMap["cancelled"] || 0,
+            },
+            recentOrganizations,
+            recentCampaigns,
+            topOrganizationsByOrders,
+            monthlyOrderTrend,
           },
-        },
-        {
-          $count: "totalUsers",
-        },
-      ];
-      const userCount = await User.aggregate(userPipeline);
+        });
+      }
 
-      const result = {
-        totalProjects: projectCount[0]?.totalProjects[0]?.totalProjects || 0,
-        completedProjects:
-          projectCount[0]?.completedProjects[0]?.completedProjects || 0,
-        inProgress: projectCount[0]?.inProgress[0]?.inProgress || 0,
-        totalUsers: userCount[0]?.totalUsers || 0,
-      };
+      // ── HR ──────────────────────────────────────────────────
+      if (userType === "HR") {
+        if (!organizationId) {
+          return UtilController.sendError(req, res, next, {
+            responseCode: returnCode.invalidParams,
+            message: "organizationId is required for HR dashboard",
+          });
+        }
 
-      UtilController.sendSuccess(req, res, next, {
-        result,
-        responseCode: returnCode.validSession,
+        const orgId = toObjectId(organizationId);
+
+        const [
+          organization,
+          totalEmployees,
+          totalCampaigns,
+          activeCampaigns,
+          completedCampaigns,
+          campaignStats,
+          orderStats,
+          ordersByStatus,
+          recentCampaigns,
+          topProducts,
+        ] = await Promise.all([
+          Organization.findById(organizationId, {
+            name: 1,
+            logo: 1,
+            email: 1,
+            city: 1,
+            state: 1,
+            mobileNumber: 1,
+          }).lean(),
+          User.countDocuments({
+            organizationId,
+            userType: "employee",
+            active: true,
+          }),
+          Campaign.countDocuments({
+            organizationId: organizationId,
+            active: true,
+          }),
+          Campaign.countDocuments({
+            organization: organizationId,
+            active: true,
+            status: "active",
+            campaignDeadline: { $gte: now },
+          }),
+          Campaign.countDocuments({
+            organization: organizationId,
+            active: true,
+            status: "completed",
+          }),
+          Campaign.aggregate([
+            { $match: { organization: orgId, active: true } },
+            {
+              $group: {
+                _id: null,
+                totalEmployeesInvited: { $sum: "$totalEmployees" },
+                totalGiftsSelected: { $sum: "$giftsSelected" },
+                totalOrdersShipped: { $sum: "$ordersShipped" },
+                totalDelivered: { $sum: "$deliveredOrders" },
+                totalBudgetAllocated: {
+                  $sum: {
+                    $multiply: ["$budgetPerEmployee", "$totalEmployees"],
+                  },
+                },
+              },
+            },
+          ]),
+          Order.aggregate([
+            { $match: { organization: orgId, active: true } },
+            {
+              $group: {
+                _id: null,
+                totalOrders: { $sum: 1 },
+                totalBudgetUsed: { $sum: "$price" },
+              },
+            },
+          ]),
+          Order.aggregate([
+            { $match: { organization: orgId, active: true } },
+            { $group: { _id: "$status", count: { $sum: 1 } } },
+          ]),
+          Campaign.find(
+            { organization: organizationId, active: true },
+            {
+              campaignName: 1,
+              occasion: 1,
+              status: 1,
+              giftingModel: 1,
+              totalEmployees: 1,
+              giftsSelected: 1,
+              deliveredOrders: 1,
+              budgetPerEmployee: 1,
+              campaignDeadline: 1,
+              createdAt: 1,
+            },
+          )
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .lean(),
+          Order.aggregate([
+            { $match: { organization: orgId, active: true } },
+            {
+              $group: {
+                _id: "$product",
+                totalOrders: { $sum: 1 },
+                productName: { $first: "$productSnapshot.name" },
+                thumbnailImage: { $first: "$productSnapshot.thumbnailImage" },
+              },
+            },
+            { $sort: { totalOrders: -1 } },
+            { $limit: 5 },
+          ]),
+        ]);
+
+        const orderStatusMap = {};
+        ordersByStatus.forEach((s) => {
+          orderStatusMap[s._id] = s.count;
+        });
+
+        const cStats = campaignStats?.[0] || {};
+        const oStats = orderStats?.[0] || {};
+        const pendingSelections = Math.max(
+          (cStats.totalEmployeesInvited || 0) -
+            (cStats.totalGiftsSelected || 0),
+          0,
+        );
+
+        return UtilController.sendSuccess(req, res, next, {
+          responseCode: returnCode.validSession,
+          message: "Dashboard fetched successfully",
+          data: {
+            userType,
+            organization: {
+              name: organization?.name || "",
+              logo: organization?.logo || "",
+              email: organization?.email || "",
+              city: organization?.city || "",
+              state: organization?.state || "",
+              mobileNumber: organization?.mobileNumber || "",
+            },
+            summary: {
+              totalEmployees,
+              totalCampaigns,
+              activeCampaigns,
+              completedCampaigns,
+              totalGiftsSelected: cStats.totalGiftsSelected || 0,
+              pendingSelections,
+              totalOrdersShipped: cStats.totalOrdersShipped || 0,
+              totalDelivered: cStats.totalDelivered || 0,
+              totalBudgetAllocated: cStats.totalBudgetAllocated || 0,
+              totalBudgetUsed: oStats.totalBudgetUsed || 0,
+              totalOrders: oStats.totalOrders || 0,
+            },
+            ordersByStatus: {
+              pending: orderStatusMap["pending"] || 0,
+              processing: orderStatusMap["processing"] || 0,
+              shipped: orderStatusMap["shipped"] || 0,
+              delivered: orderStatusMap["delivered"] || 0,
+              cancelled: orderStatusMap["cancelled"] || 0,
+            },
+            recentCampaigns,
+            topProducts,
+          },
+        });
+      }
+
+      // ── VENDOR ──────────────────────────────────────────────
+      if (userType === "vendor") {
+        const vendorId = toObjectId(userId);
+
+        const [
+          totalProducts,
+          activeProducts,
+          outOfStockProducts,
+          lowStockProducts,
+          productStats,
+          orderStats,
+          ordersByStatus,
+          recentOrders,
+          topSellingProducts,
+        ] = await Promise.all([
+          Product.countDocuments({ vendor: userId, active: true }),
+          Product.countDocuments({
+            vendor: userId,
+            active: true,
+            inStock: true,
+          }),
+          Product.countDocuments({
+            vendor: userId,
+            active: true,
+            inStock: false,
+          }),
+          Product.countDocuments({
+            vendor: userId,
+            active: true,
+            inStock: true,
+            $expr: { $lte: ["$stockQuantity", "$lowStockThreshold"] },
+          }),
+          Product.aggregate([
+            { $match: { vendor: vendorId, active: true } },
+            {
+              $group: {
+                _id: null,
+                totalStockUnits: { $sum: "$stockQuantity" },
+                totalCatalogueValue: {
+                  $sum: { $multiply: ["$price", "$stockQuantity"] },
+                },
+                avgPrice: { $avg: "$price" },
+              },
+            },
+          ]),
+          Order.aggregate([
+            { $match: { vendor: vendorId, active: true } },
+            {
+              $group: {
+                _id: null,
+                totalOrders: { $sum: 1 },
+                totalRevenue: { $sum: "$price" },
+              },
+            },
+          ]),
+          Order.aggregate([
+            { $match: { vendor: vendorId, active: true } },
+            { $group: { _id: "$status", count: { $sum: 1 } } },
+          ]),
+          Order.aggregate([
+            { $match: { vendor: vendorId, active: true } },
+            {
+              $lookup: {
+                from: "users",
+                localField: "employee",
+                foreignField: "_id",
+                as: "employeeDetails",
+              },
+            },
+            {
+              $project: {
+                orderId: 1,
+                status: 1,
+                price: 1,
+                createdAt: 1,
+                "productSnapshot.name": 1,
+                "productSnapshot.thumbnailImage": 1,
+                "deliveryAddress.city": 1,
+                employeeName: {
+                  $arrayElemAt: ["$employeeDetails.fullName", 0],
+                },
+              },
+            },
+            { $sort: { createdAt: -1 } },
+            { $limit: 5 },
+          ]),
+          Order.aggregate([
+            { $match: { vendor: vendorId, active: true } },
+            {
+              $group: {
+                _id: "$product",
+                totalSold: { $sum: 1 },
+                totalRevenue: { $sum: "$price" },
+                productName: { $first: "$productSnapshot.name" },
+                thumbnailImage: { $first: "$productSnapshot.thumbnailImage" },
+              },
+            },
+            { $sort: { totalSold: -1 } },
+            { $limit: 5 },
+          ]),
+        ]);
+
+        const orderStatusMap = {};
+        ordersByStatus.forEach((s) => {
+          orderStatusMap[s._id] = s.count;
+        });
+        const pStats = productStats?.[0] || {};
+        const oStats = orderStats?.[0] || {};
+
+        return UtilController.sendSuccess(req, res, next, {
+          responseCode: returnCode.validSession,
+          message: "Dashboard fetched successfully",
+          data: {
+            userType,
+            products: {
+              totalProducts,
+              activeProducts,
+              outOfStockProducts,
+              lowStockProducts,
+              totalStockUnits: pStats.totalStockUnits || 0,
+              totalCatalogueValue: pStats.totalCatalogueValue || 0,
+              avgPrice: Math.round(pStats.avgPrice || 0),
+            },
+            orders: {
+              totalOrders: oStats.totalOrders || 0,
+              totalRevenue: oStats.totalRevenue || 0,
+            },
+            ordersByStatus: {
+              pending: orderStatusMap["pending"] || 0,
+              processing: orderStatusMap["processing"] || 0,
+              shipped: orderStatusMap["shipped"] || 0,
+              delivered: orderStatusMap["delivered"] || 0,
+              cancelled: orderStatusMap["cancelled"] || 0,
+            },
+            recentOrders,
+            topSellingProducts,
+          },
+        });
+      }
+
+      // ── UNKNOWN ROLE ────────────────────────────────────────
+      return UtilController.sendError(req, res, next, {
+        responseCode: returnCode.invalidParams,
+        message: "Dashboard not available for this user type",
       });
-    } catch (error) {
-      UtilController.sendError(req, res, next, error);
-    }
-  },
-  dashboardGraph: async (req, res, next) => {
-    try {
-      const { startDate, endDate, dateType, graphType } = req.query;
-      // console.log(req.query);
-
-      const timezoneOffsetHours = 5.5;
-      const offsetInSeconds = timezoneOffsetHours * 3600;
-      let start = Number(startDate) + offsetInSeconds;
-      let end = Number(endDate) + offsetInSeconds;
-      const result = {};
-
-      const epochToDate = {
-        $toDate: { $multiply: ["$createdAt", 1000] },
-      };
-
-      let groupBy = {
-        year: { $year: epochToDate },
-      };
-
-      if (dateType === "month") {
-        groupBy.month = { $month: epochToDate };
-      } else if (dateType === "week") {
-        groupBy.week = { $isoWeek: epochToDate };
-        groupBy.year = { $isoWeekYear: epochToDate };
-      } else if (dateType === "day") {
-        groupBy.month = { $month: epochToDate };
-        groupBy.day = { $dayOfMonth: epochToDate };
-      }
-
-      const monthNames = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-      ];
-
-      const projectStage = {
-        _id: 0,
-        year: "$_id.year",
-        month: "$_id.month",
-        day: "$_id.day",
-        week: "$_id.week",
-      };
-
-      if (dateType === "month") {
-        projectStage.monthName = {
-          $arrayElemAt: [monthNames, { $subtract: ["$_id.month", 1] }],
-        };
-      }
-
-      if (graphType === "projects") {
-        const projectPipeline = [
-          {
-            $match: {
-              createdAt: { $gte: start, $lte: end },
-              active: true,
-            },
-          },
-          {
-            $group: {
-              _id: groupBy,
-              totalProjects: { $sum: 1 },
-              completedProject: {
-                $sum: {
-                  $cond: [
-                    {
-                      $and: [{ $eq: ["$status", "completed"] }],
-                    },
-                    1,
-                    0,
-                  ],
-                },
-              },
-              inProgress: {
-                $sum: { $cond: [{ $eq: ["$status", "inprogress"] }, 1, 0] },
-              },
-              cancelled: {
-                $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] },
-              },
-              // pending: {
-              //   $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] },
-              // },
-            },
-          },
-          {
-            $project: {
-              ...projectStage,
-              totalProjects: 1,
-              completedProject: 1,
-              inProgress: 1,
-              cancelled: 1,
-              // pending: 1,
-            },
-          },
-          { $sort: { year: 1, month: 1, day: 1, week: 1 } },
-        ];
-        let projectGraph = await Project.aggregate(projectPipeline);
-
-        result.projects = projectGraph;
-      } else if (graphType === "users") {
-        const userPipeline = [
-          {
-            $match: {
-              createdAt: { $gte: start, $lte: end },
-              active: true,
-            },
-          },
-          {
-            $group: {
-              _id: groupBy,
-              totalUsers: { $sum: 1 },
-              worker: {
-                $sum: {
-                  $cond: [
-                    {
-                      $and: [{ $eq: ["$userType", "worker"] }],
-                    },
-                    1,
-                    0,
-                  ],
-                },
-              },
-              admin: {
-                $sum: { $cond: [{ $eq: ["$userType", "admin"] }, 1, 0] },
-              },
-              supervisor: {
-                $sum: { $cond: [{ $eq: ["$userType", "supervisor"] }, 1, 0] },
-              },
-            },
-          },
-          {
-            $project: {
-              ...projectStage,
-              totalUsers: 1,
-              worker: 1,
-              admin: 1,
-              supervisor: 1,
-            },
-          },
-          { $sort: { year: 1, month: 1, day: 1, week: 1 } },
-        ];
-        let userGraph = await User.aggregate(userPipeline);
-        result.users = userGraph;
-      } else if (graphType === "tasks") {
-        const taskPipeline = [
-          {
-            $match: {
-              createdAt: { $gte: start, $lte: end },
-              active: true,
-            },
-          },
-          {
-            $group: {
-              _id: groupBy,
-              totalTask: { $sum: 1 },
-              completedTask: {
-                $sum: {
-                  $cond: [
-                    {
-                      $and: [{ $eq: ["$taskStatus", "completed"] }],
-                    },
-                    1,
-                    0,
-                  ],
-                },
-              },
-              pendingTask: {
-                $sum: { $cond: [{ $eq: ["$taskStatus", "inprogress"] }, 1, 0] },
-              },
-            },
-          },
-          {
-            $project: {
-              ...projectStage,
-              totalTask: 1,
-              completedTask: 1,
-              pendingTask: 1,
-            },
-          },
-          { $sort: { year: 1, month: 1, day: 1, week: 1 } },
-        ];
-        let taskGraph = await Task.aggregate(taskPipeline);
-        result.tasks = taskGraph;
-      }
-
-      UtilController.sendSuccess(req, res, next, {
-        result,
-        responseCode: returnCode.validSession,
-      });
-    } catch (error) {
-      console.log("error: ", error);
-      UtilController.sendError(req, res, next, error);
-    }
-  },
-
-  dashboardProject: async (req, res, next) => {
-    try {
-      const { startDate, endDate, status } = req.query;
-      const matchFilter = { active: true };
-      if (status) {
-        matchFilter.status = status;
-      }
-      if (startDate && endDate) {
-        matchFilter.startDate = { $gte: Number(startDate) };
-        matchFilter.endDate = { $lte: Number(endDate) };
-      } else if (startDate) {
-        matchFilter.startDate = { $gte: Number(startDate) };
-      } else if (endDate) {
-        matchFilter.endDate = { $lte: Number(endDate) };
-      }
-
-      const result = await Project.aggregate([
-        { $match: matchFilter },
-        {
-          $lookup: {
-            from: "tasks",
-            localField: "_id",
-            foreignField: "projectId",
-            as: "tasks",
-          },
-        },
-
-        {
-          $addFields: {
-            tasks: {
-              $size: {
-                $filter: {
-                  input: "$tasks",
-                  as: "task",
-                  cond: { $eq: ["$$task.active", true] },
-                },
-              },
-            },
-          },
-        },
-        {
-          $project: {
-            uploadImage: 1,
-            assignedWorkers: 1,
-            tasks: 1,
-            createdAt: 1,
-            startDate: 1,
-            endDate: 1,
-            projectName: 1,
-            location: 1,
-            status: 1,
-          },
-        },
-      ]);
-      return UtilController.sendSuccess(req, res, next, {
-        result,
-        responseCode: returnCode.validSession,
-      });
-    } catch (error) {
-      UtilController.sendError(req, res, next, error);
+    } catch (err) {
+      console.log("err: ", err);
+      UtilController.sendError(req, res, next, err);
     }
   },
 };
