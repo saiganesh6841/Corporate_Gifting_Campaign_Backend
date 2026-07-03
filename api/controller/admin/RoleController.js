@@ -11,11 +11,13 @@ module.exports = {
       let roleCount = await Role.countDocuments({
         name: createObj.name.trim(),
         createdBy: userId,
+        updatedBy: userId,
       });
       var addRoledata = {
         name: createObj.name,
         active: createObj.active,
         createdBy: userId,
+        updatedBy: userId,
         permission: roleConfig.permission,
       };
       if (roleCount === 0) {
@@ -209,7 +211,7 @@ module.exports = {
       const role = await Role.findByIdAndUpdate(
         roleId,
         { $set: updateObj },
-        { new: true }
+        { new: true },
       ).lean();
 
       if (!role) {
@@ -247,7 +249,7 @@ module.exports = {
 
       await Role.updateMany(
         { _id: { $in: recordIds } },
-        { $set: { active: false } }
+        { $set: { active: false } },
       );
 
       UtilController.sendSuccess(req, res, next, {
