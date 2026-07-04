@@ -182,8 +182,7 @@ module.exports = {
       console.log("✅ Campaign created:", campaign._id);
 
       const now = Math.floor(Date.now() / 1000);
-      const BASE_GIFT_URL =
-        "https://bodacious-overspend-limit.ngrok-free.dev/#/gift";
+      const BASE_GIFT_URL = "http://13.201.19.72:4000/#/gift";
 
       const userBulkOps = [];
       let skippedRows = 0;

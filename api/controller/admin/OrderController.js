@@ -717,7 +717,7 @@ module.exports = {
           if (emailHtmlContent) {
             const giftLink =
               employee.giftLink ||
-              `http://localhost:5173/#/gift/${employee?.linkToken}`;
+              `http://13.201.19.72:4000/#/gift/${employee?.linkToken}`;
 
             const deadlineDate = campaign?.campaignDeadline
               ? new Date(
