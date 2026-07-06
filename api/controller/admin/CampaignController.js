@@ -8,6 +8,7 @@ const Order = require("../../model/order");
 const xlsx = require("xlsx");
 const crypto = require("crypto");
 const { sendBulkMail } = require("../services/MailService");
+const { default: mongoose } = require("mongoose");
 
 const parseEmployeeExcel = (buffer) => {
   const workbook = xlsx.read(buffer, { type: "buffer" });
@@ -1406,7 +1407,7 @@ module.exports = {
             active: { $first: "$active" },
             createdAt: { $first: "$createdAt" },
             updatedAt: { $first: "$updatedAt" },
-
+            emailTextInformation: { $first: "$emailTextInformation" },
             organization: {
               $first: {
                 _id: "$organization._id",
@@ -1468,7 +1469,7 @@ module.exports = {
   listCampaign: async (req, res, next) => {
     try {
       const { ...filters } = req.body;
-      const organizationId = req.user.organizationId;
+      // const organizationId = req.user.organizationId;
 
       let queryObj = {
         active: filters.active ?? true,
@@ -1479,10 +1480,16 @@ module.exports = {
 
       // HR sees only their org campaigns
       // SuperAdmin can pass organizationId filter or see all
-      if (organizationId) {
-        queryObj.organization = organizationId;
-      } else if (filters.organization) {
-        queryObj.organization = filters.organization;
+      // if (organizationId) {
+      //   queryObj.organization = organizationId;
+      // } else if (filters.organization) {
+      //   queryObj.organization = filters.organization;
+      // }
+      console.log("filters.organization: ", filters.organization);
+      if (!UtilController.isEmpty(filters.organization)) {
+        queryObj.organizationId = new mongoose.Types.ObjectId(
+          filters.organization,
+        );
       }
 
       if (filters.giftingModel) {
@@ -1517,13 +1524,13 @@ module.exports = {
           },
         ];
       }
-
+      console.log("queryObj: ", queryObj);
       const pipeline = [
         { $match: queryObj },
         {
           $lookup: {
             from: "organizations",
-            localField: "organization",
+            localField: "organizationId",
             foreignField: "_id",
             as: "organizationDetails",
           },

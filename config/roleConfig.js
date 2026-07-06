@@ -60,26 +60,26 @@ module.exports = {
           label: "add",
           enable: true,
         },
-        {
-          label: "edit",
-          enable: true,
-        },
+        // {
+        //   label: "edit",
+        //   enable: true,
+        // },
         {
           label: "view",
           enable: true,
         },
-        {
-          label: "delete",
-          enable: true,
-        },
+        // {
+        //   label: "delete",
+        //   enable: true,
+        // },
         {
           label: "query",
           enable: true,
         },
-        {
-          label: "export",
-          enable: true,
-        },
+        // {
+        //   label: "export",
+        //   enable: true,
+        // },
       ],
     },
     {
@@ -126,6 +126,10 @@ module.exports = {
         },
         {
           label: "delete",
+          enable: true,
+        },
+        {
+          label: "restore",
           enable: true,
         },
         {

@@ -426,7 +426,7 @@ module.exports = {
 
   updateUser: async (req, res, next) => {
     try {
-      const { userId, ...updateObj } = req.body;
+      const { userId, _id, ...updateObj } = req.body;
       // console.log("userId: ", userId);
 
       if (UtilController.isEmpty(userId)) {
@@ -474,12 +474,12 @@ module.exports = {
       updateObj["updatedAt"] = Math.floor(Date.now() / 1000);
 
       const result = await User.findOneAndUpdate(
-        { _id: userId },
+        { _id: _id },
         { $set: updateObj },
         { updatedAt: Math.floor(Date.now() / 1000) },
         { new: true },
       );
-      console.log("result: ", result, userId);
+      console.log("result: ", result, _id);
       if (UtilController.isEmpty(result)) {
         return UtilController.sendSuccess(req, res, next, {
           message: "User not found",
@@ -521,6 +521,49 @@ module.exports = {
       UtilController.sendSuccess(req, res, next, {
         rows: result,
         message: "success",
+        responseCode: returnCode.validSession,
+      });
+    } catch (error) {
+      console.log("error: ", error);
+      UtilController.sendError(req, res, error);
+    }
+  },
+
+  restoreUser: async (req, res, next) => {
+    try {
+      const { userId } = req.body;
+
+      if (UtilController.isEmpty(userId)) {
+        return UtilController.sendSuccess(req, res, next, {
+          message: "userId is required",
+          responseCode: returnCode.invalidInput,
+        });
+      }
+
+      const result = await User.updateMany(
+        {
+          _id: { $in: userId },
+          active: false,
+        },
+        {
+          $set: {
+            active: true,
+            updatedBy: req.user?.userId,
+            updatedAt: Math.floor(Date.now() / 1000),
+          },
+        },
+      );
+
+      if (result.matchedCount === 0 || result.modifiedCount === 0) {
+        return UtilController.sendSuccess(req, res, next, {
+          message: "No deleted users found to restore",
+          responseCode: returnCode.invalidInput,
+        });
+      }
+
+      UtilController.sendSuccess(req, res, next, {
+        rows: result,
+        message: "User(s) restored successfully",
         responseCode: returnCode.validSession,
       });
     } catch (error) {

@@ -29,6 +29,7 @@ router.route("/user/create").post(UserController.createUser);
 router.route("/user/get").post(UserController.getUserById);
 router.route("/user/update").post(UserController.updateUser);
 router.route("/user/delete").post(UserController.deleteUser);
+router.route("/user/restore").post(UserController.restoreUser);
 
 // roles routes
 router.route("/role/create").post(RoleController.createRole);

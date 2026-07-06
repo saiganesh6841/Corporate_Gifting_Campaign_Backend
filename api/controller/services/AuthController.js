@@ -46,13 +46,27 @@ const extractTokenDetails = (req, res, next) => {
 module.exports = {
   checkRequestAuth: async function (req, res, next) {
     try {
+      // extractTokenDetails(req, res, () => {});
+
+      // if (
+      //   req.path.startsWith("/admin") &&
+      //   adminAuthList.indexOf(req.path) <= -1
+      // ) {
+      //   module.exports.verifyAuthTokenForApiRequest(req, res, next);
       extractTokenDetails(req, res, () => {});
 
-      if (
-        req.path.startsWith("/admin") &&
-        adminAuthList.indexOf(req.path) <= -1
-      ) {
-        module.exports.verifyAuthTokenForApiRequest(req, res, next);
+      if (req.path.startsWith("/admin")) {
+        // ✅ use startsWith instead of indexOf for dynamic route support
+        const isExcluded = adminAuthList.some(
+          (p) =>
+            req.path === p ||
+            req.path.startsWith(p + "/") ||
+            req.path.startsWith(p),
+        );
+        if (!isExcluded) {
+          return module.exports.verifyAuthTokenForApiRequest(req, res, next);
+        }
+        return next();
       } else if (
         req.path.startsWith("/user") &&
         usersAuthList.indexOf(req.path) < 0

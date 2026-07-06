@@ -7,6 +7,8 @@ module.exports = {
       "/create/user",
       "/create/project",
       "/upload/file",
+      "/gift/validate-token",
+      "/gift/place-order",
     ],
     language: [],
   },

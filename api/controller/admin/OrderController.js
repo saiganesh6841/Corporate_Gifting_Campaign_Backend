@@ -845,6 +845,7 @@ module.exports = {
         "shipped",
         "delivered",
         "cancelled",
+        "approved",
       ];
       if (status && !validStatuses.includes(status)) {
         return UtilController.sendError(req, res, next, {
@@ -939,7 +940,7 @@ module.exports = {
         .populate("vendor", "fullName email mobileNumber")
         .populate(
           "campaign",
-          "campaignName occasion giftingModel products campaignDeadline campaignWindowStart campaignWindowEnd budgetPerEmployee ",
+          "campaignName occasion giftingModel products campaignDeadline deliveryWindowStart deliveryWindowEnd budgetPerEmployee ",
         )
         .populate("organization", "name email logo")
         .lean();
@@ -992,7 +993,19 @@ module.exports = {
 
       // vendor-side login only sees their own orders
       if (req.user.userType === "vendor") {
-        queryObj.vendor = req.user.userId;
+        // queryObj.vendor = req.user.userId;
+        const vendorUser = await User.findOne(
+          { _id: req.user.userId, active: true },
+          { _id: 1 },
+        ).lean();
+
+        if (!vendorUser) {
+          return UtilController.sendError(req, res, next, {
+            responseCode: returnCode.dataNotFound,
+            message: "Vendor not found",
+          });
+        }
+        queryObj.vendor = vendorUser._id;
       }
       // HR-side login only sees their org's orders
       if (req.user.userType === "hr" && req.user.organizationId) {

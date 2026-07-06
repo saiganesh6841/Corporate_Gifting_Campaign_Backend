@@ -54,6 +54,10 @@ const orderSchema = new mongoose.Schema({
     type: String,
     default: "pending", // pending, processing, shipped, delivered, cancelled
   },
+  rejectedReason: {
+    type: String,
+    default: "",
+  },
   awb: {
     type: String,
     default: "",
